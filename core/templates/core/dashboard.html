@@ -1,0 +1,775 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mx-auto max-w-7xl px-4 py-8 space-y-8">
+
+    <!-- ───────────────────────────────────────────── Page Header ── -->
+    <div class="flex flex-col sm:flex-row justify-between items-center w-full mb-6">
+        <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight mb-4 sm:mb-0">My Dashboard</h2>
+        <a href="{% url 'download_statement' %}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-200 flex items-center gap-2 transition-all duration-300 transform hover:-translate-y-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Download Statement
+        </a>
+    </div>
+
+    <!-- ──────────────────────────────────────────── Virtual Card ── -->
+    <div class="w-full max-w-md">
+        <div class="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-2xl shadow-2xl text-white relative overflow-hidden transition-all duration-300" id="virtualCard">
+            <div class="absolute -inset-1/2 bg-white opacity-10 blur-2xl rounded-full transform -skew-y-12 pointer-events-none"></div>
+            
+            <div class="relative z-10 flex justify-between items-start mb-8">
+                <div>
+                    <h3 class="text-xs font-semibold opacity-80 uppercase tracking-widest mb-1">
+                        M U D <span class="text-orange-400 text-sm font-black">₹</span> A ELITE
+                    </h3>
+                    <!-- Live balance — updated by AJAX on successful transfer -->
+                    <div class="text-3xl font-bold font-mono" id="liveBalance">₹{{ user.balance|default:"0.00" }}</div>
+                </div>
+                <div class="flex">
+                    <div class="w-10 h-10 rounded-full bg-red-500 mix-blend-multiply opacity-90"></div>
+                    <div class="w-10 h-10 rounded-full bg-yellow-400 mix-blend-multiply opacity-90 -ml-4"></div>
+                </div>
+            </div>
+            
+            <div class="relative z-10 space-y-5">
+                <div class="font-mono text-2xl tracking-[0.15em] drop-shadow-md">
+                    4532  1245  7890  3021
+                </div>
+                
+                <div class="flex justify-between items-end">
+                    <div>
+                        <div class="text-[10px] opacity-75 uppercase tracking-widest mb-1">Card Holder</div>
+                        <div class="font-bold tracking-widest uppercase text-sm">
+                            {{ request.user.name|default:request.user.roll_number }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] opacity-75 uppercase tracking-widest mb-1">Valid Thru</div>
+                        <div class="font-bold tracking-widest font-mono text-sm">12/28</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="freezeOverlay" class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-20 hidden flex items-center justify-center transition-all duration-300">
+                <span class="text-white font-extrabold tracking-widest uppercase border-2 border-white px-5 py-2 rounded text-lg transform -rotate-12 shadow-lg">Frozen</span>
+            </div>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+            <label class="flex items-center cursor-pointer">
+                <span class="mr-3 text-slate-600 font-bold text-sm transition-colors duration-300" id="toggleText">Freeze Card</span>
+                <div class="relative">
+                    <input type="checkbox" id="freezeToggle" class="sr-only">
+                    <div class="block bg-slate-200 w-12 h-7 rounded-full transition-colors duration-300 shadow-inner" id="toggleBg"></div>
+                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 shadow-md"></div>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────── Charts ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Balance Trend</h3>
+            <div class="relative h-64 w-full">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Expense Summary</h3>
+            <div class="relative h-64 w-full">
+                <canvas id="expenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────────────────── Send Money + Bill Splitter Row ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Send Money (AJAX) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 w-full relative">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                Send Money
+            </h3>
+
+            <!-- Toast notification area -->
+            <div id="sendMoneyToast" class="hidden mb-4 px-4 py-3 rounded-lg text-sm font-semibold"></div>
+
+            <div class="space-y-4" id="sendMoneyForm">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Recipient Roll Number</label>
+                    <div class="relative">
+                        <input type="text" id="recipientInput" placeholder="e.g. 12346" required
+                               class="w-full pl-4 pr-12 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <button type="button" id="startScannerBtn"
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors"
+                                title="Scan QR Code">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
+                    <input type="number" id="sendAmount" min="1" step="0.01" placeholder="e.g. 200" required
+                           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                    <select id="sendCategory" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="Mess Fee">Mess Fee</option>
+                        <option value="Canteen">Canteen</option>
+                        <option value="Books">Books</option>
+                        <option value="Hostel">Hostel</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <button type="button" id="sendMoneyBtn"
+                        class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                    Proceed Transfer
+                </button>
+            </div>
+        </div>
+
+        <!-- Bill Splitter (AJAX) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 w-full">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 11V9a2 2 0 00-2-2m2 4v4a2 2 0 104 0v-1m-4-3H9m2 0h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Bill Splitter
+            </h3>
+
+            <div id="splitToast" class="hidden mb-4 px-4 py-3 rounded-lg text-sm font-semibold"></div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Total Bill Amount (₹)</label>
+                    <input type="number" id="splitTotal" placeholder="e.g. 500" min="1"
+                           class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Friends' Roll Numbers</label>
+                    <input type="text" id="splitFriends" placeholder="e.g. 12345, 12346"
+                           class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition-all">
+                    <p class="text-xs text-slate-400 mt-1">Separate multiple roll numbers with commas.</p>
+                </div>
+                
+                <div id="splitResult" class="hidden bg-orange-50 p-4 rounded-xl border border-orange-100 text-orange-800 text-sm transition-all">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>Per Person Share:</span>
+                        <span id="perPersonAmount" class="text-2xl font-mono text-orange-600">₹0.00</span>
+                    </div>
+                    <p class="text-xs mt-1 opacity-80 font-medium">Including you, split among <span id="totalPeople" class="font-bold">0</span> people.</p>
+                </div>
+
+                <button id="sendSplitBtn"
+                        class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition-all duration-300 flex justify-center items-center gap-2 shadow-lg shadow-orange-200">
+                    Send Payment Requests
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ────────────────── Loan Center + Admin Approvals Row ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Loan Center -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Loan Center
+                </h3>
+                <button id="openLoanModal" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition">
+                    Apply for Loan
+                </button>
+            </div>
+
+            <!-- Loan toast -->
+            <div id="loanToast" class="hidden mb-4 px-4 py-3 rounded-lg text-sm font-semibold"></div>
+
+            <!-- Live loan list (injected by AJAX after applying) -->
+            <div id="loanList" class="space-y-3">
+                {% for loan in active_loans %}
+                <div class="flex items-center justify-between bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
+                    <div>
+                        <p class="font-semibold text-slate-700 text-sm">₹{{ loan.amount }} — {{ loan.purpose }}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">{{ loan.created_at|date:"M d, H:i" }}</p>
+                    </div>
+                    <span class="text-xs font-bold px-3 py-1 rounded-full
+                        {% if loan.status == 'Approved' %}bg-green-100 text-green-700
+                        {% elif loan.status == 'Rejected' %}bg-red-100 text-red-700
+                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {{ loan.status }}
+                    </span>
+                </div>
+                {% empty %}
+                <div class="text-center py-6 text-slate-400 text-sm" id="noLoansMsg">
+                    No active loans. Apply above to get started.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Admin: Pending Approvals (superuser only) -->
+        {% if request.user.is_superuser %}
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h3 class="text-lg font-bold text-purple-800 flex items-center gap-2 mb-4">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Admin: Pending Loan Approvals
+            </h3>
+            <div id="adminLoanList" class="space-y-3">
+                {% for loan in pending_all_loans %}
+                <div class="bg-purple-50 border border-purple-100 px-4 py-3 rounded-xl flex items-start justify-between gap-2" id="adminLoan-{{ loan.id }}">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-slate-700 text-sm truncate">{{ loan.user.name }} ({{ loan.user.roll_number }})</p>
+                        <p class="text-xs text-slate-500 mt-0.5">₹{{ loan.amount }} — {{ loan.purpose }}</p>
+                        <p class="text-xs text-slate-400">{{ loan.created_at|date:"M d, H:i" }}</p>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick="approveLoan({{ loan.id }}, 'Approved')"
+                                class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                            Approve
+                        </button>
+                        <button onclick="approveLoan({{ loan.id }}, 'Rejected')"
+                                class="bg-red-400 hover:bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-6 text-slate-400 text-sm" id="noPendingMsg">
+                    No pending approvals at the moment.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- ──────────────────────── Recent Transactions Table ── -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Recent Transactions</h3>
+        {% if recent_transactions %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-slate-500 border-b">
+                        <th class="pb-3 font-semibold">Date</th>
+                        <th class="pb-3 font-semibold">Type</th>
+                        <th class="pb-3 font-semibold">Counterparty</th>
+                        <th class="pb-3 font-semibold">Category</th>
+                        <th class="pb-3 font-semibold text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for txn in recent_transactions %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 text-slate-500">{{ txn.timestamp|date:"M d, H:i" }}</td>
+                        <td class="py-3">
+                            {% if txn.sender == user %}
+                            <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-xs font-bold">Sent</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-xs font-bold">Received</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 font-medium text-slate-700">
+                            {% if txn.sender == user %}{{ txn.receiver.name }}{% else %}{{ txn.sender.name }}{% endif %}
+                        </td>
+                        <td class="py-3 text-slate-500">{{ txn.category }}</td>
+                        <td class="py-3 text-right font-bold font-mono
+                            {% if txn.sender == user %}text-red-500{% else %}text-green-600{% endif %}">
+                            {% if txn.sender == user %}-{% else %}+{% endif %}₹{{ txn.amount }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-8 text-slate-400 text-sm">No transactions yet. Send money to get started!</p>
+        {% endif %}
+    </div>
+
+</div>
+
+
+<!-- ════════════════════════════════════ QR Scanner Modal ══ -->
+<div id="scannerModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm relative transform scale-95 transition-transform duration-300" id="scannerModalContent">
+        <button id="closeScannerBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 z-10 bg-white rounded-full p-1 shadow">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-4 text-center">Scan QR Code</h3>
+        <div class="w-full overflow-hidden rounded-xl bg-slate-100 flex items-center justify-center relative min-h-[250px]">
+            <div id="qr-reader" class="w-full"></div>
+            <p id="scannerStatus" class="absolute text-sm text-slate-500 font-medium">Requesting camera access...</p>
+        </div>
+        <p class="text-xs text-center text-slate-400 mt-4">Point your camera at the receiver's QR code.</p>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════ Loan Modal ══ -->
+<div id="loanModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm relative transform scale-95 transition-transform duration-300" id="loanModalContent">
+        <button id="closeLoanModal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Apply for a Loan</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
+                <input type="number" id="loanAmount" min="100" placeholder="e.g. 5000"
+                       class="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Purpose</label>
+                <input type="text" id="loanPurpose" placeholder="e.g. Semester books, hostel fee"
+                       class="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+            <div id="loanModalToast" class="hidden px-4 py-3 rounded-lg text-sm font-semibold"></div>
+            <button id="submitLoanBtn"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-200">
+                Submit Application
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_css %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<style>
+    #qr-reader { border: none !important; }
+    #qr-reader__scan_region { min-height: 250px; }
+    #qr-reader__dashboard_section_csr span { color: #64748b; font-size: 0.875rem; }
+</style>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ═══════════════════════════════════════════════════════════════
+// UTILITY: CSRF token getter (required for Django AJAX POSTs)
+// ═══════════════════════════════════════════════════════════════
+function getCsrfToken() {
+    const name = 'csrftoken';
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) {
+        const [k, v] = c.trim().split('=');
+        if (k === name) return decodeURIComponent(v);
+    }
+    return '';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITY: Show toast notification in a given element
+// ═══════════════════════════════════════════════════════════════
+function showToast(elId, message, isSuccess) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = message;
+    el.className = `mb-4 px-4 py-3 rounded-lg text-sm font-semibold ${
+        isSuccess
+            ? 'bg-green-50 border border-green-200 text-green-700'
+            : 'bg-red-50 border border-red-200 text-red-700'
+    }`;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 1. VIRTUAL CARD FREEZE TOGGLE
+// ═══════════════════════════════════════════════════════════════
+const toggle     = document.getElementById('freezeToggle');
+const overlay    = document.getElementById('freezeOverlay');
+const toggleBg   = document.getElementById('toggleBg');
+const toggleText = document.getElementById('toggleText');
+const dot        = document.querySelector('.dot');
+
+if (toggle) {
+    toggle.addEventListener('change', function () {
+        if (this.checked) {
+            overlay.classList.remove('hidden');
+            toggleBg.classList.replace('bg-slate-200', 'bg-red-500');
+            dot.classList.add('translate-x-5');
+            toggleText.textContent = 'Unfreeze Card';
+            toggleText.classList.replace('text-slate-600', 'text-red-500');
+        } else {
+            overlay.classList.add('hidden');
+            toggleBg.classList.replace('bg-red-500', 'bg-slate-200');
+            dot.classList.remove('translate-x-5');
+            toggleText.textContent = 'Freeze Card';
+            toggleText.classList.replace('text-red-500', 'text-slate-600');
+        }
+    });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// 2. CHART.JS GRAPHS
+// ═══════════════════════════════════════════════════════════════
+const expenseLabels = {{ expense_labels|safe|default:"[]" }};
+const expenseData   = {{ expense_data|safe|default:"[]" }};
+const trendLabels   = {{ trend_labels|safe|default:"[]" }};
+const trendData     = {{ trend_data|safe|default:"[]" }};
+
+const expenseCtx = document.getElementById('expenseChart');
+if (expenseCtx) {
+    new Chart(expenseCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: expenseLabels.length > 0 ? expenseLabels : ['No Data'],
+            datasets: [{
+                data: expenseData.length > 0 ? expenseData : [1],
+                backgroundColor: ['#4f46e5','#3b82f6','#8b5cf6','#ec4899','#f43f5e','#e2e8f0'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
+    });
+}
+
+const trendCtx = document.getElementById('trendChart');
+if (trendCtx) {
+    new Chart(trendCtx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: trendLabels.length > 0 ? trendLabels : ['Now'],
+            datasets: [{
+                label: 'Balance (₹)',
+                data: trendData.length > 0 ? trendData : [{{ user.balance|default:"0" }}],
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// 3. SEND MONEY — AJAX
+// ═══════════════════════════════════════════════════════════════
+const sendMoneyBtn = document.getElementById('sendMoneyBtn');
+
+if (sendMoneyBtn) {
+    sendMoneyBtn.addEventListener('click', async () => {
+        const recipient = document.getElementById('recipientInput').value.trim();
+        const amount    = parseFloat(document.getElementById('sendAmount').value);
+        const category  = document.getElementById('sendCategory').value;
+
+        if (!recipient || !amount || amount <= 0) {
+            showToast('sendMoneyToast', 'Please fill in all fields correctly.', false);
+            return;
+        }
+
+        // Set loading state
+        sendMoneyBtn.disabled = true;
+        sendMoneyBtn.innerHTML = `
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg> Processing...`;
+
+        try {
+            const res  = await fetch('{% url "send_money_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type':  'application/json',
+                    'X-CSRFToken':   getCsrfToken(),
+                },
+                body: JSON.stringify({ roll_number: recipient, amount, category }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('sendMoneyToast', '✅ ' + data.message, true);
+                // Update balance display without page reload
+                document.getElementById('liveBalance').textContent = `₹${parseFloat(data.new_balance).toFixed(2)}`;
+                // Clear inputs
+                document.getElementById('recipientInput').value = '';
+                document.getElementById('sendAmount').value     = '';
+            } else {
+                showToast('sendMoneyToast', '❌ ' + data.message, false);
+            }
+        } catch (err) {
+            showToast('sendMoneyToast', '❌ Network error. Please try again.', false);
+        } finally {
+            sendMoneyBtn.disabled = false;
+            sendMoneyBtn.textContent = 'Proceed Transfer';
+        }
+    });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// 4. BILL SPLITTER — AJAX
+// ═══════════════════════════════════════════════════════════════
+const splitTotalInput   = document.getElementById('splitTotal');
+const splitFriendsInput = document.getElementById('splitFriends');
+const splitResult       = document.getElementById('splitResult');
+const perPersonAmount   = document.getElementById('perPersonAmount');
+const totalPeopleSpan   = document.getElementById('totalPeople');
+const sendSplitBtn      = document.getElementById('sendSplitBtn');
+
+function calculateSplit() {
+    const total      = parseFloat(splitTotalInput.value) || 0;
+    const friendsStr = splitFriendsInput.value.trim();
+
+    if (total > 0 && friendsStr.length > 0) {
+        const friendsArray = friendsStr.split(',').filter(f => f.trim().length > 0);
+        const totalPeople  = friendsArray.length + 1;
+        const share        = (total / totalPeople).toFixed(2);
+        perPersonAmount.textContent = `₹${share}`;
+        totalPeopleSpan.textContent = totalPeople;
+        splitResult.classList.remove('hidden');
+    } else {
+        splitResult.classList.add('hidden');
+    }
+}
+
+if (splitTotalInput && splitFriendsInput) {
+    splitTotalInput.addEventListener('input', calculateSplit);
+    splitFriendsInput.addEventListener('input', calculateSplit);
+
+    sendSplitBtn.addEventListener('click', async () => {
+        const total      = parseFloat(splitTotalInput.value) || 0;
+        const friendsStr = splitFriendsInput.value.trim();
+
+        if (!friendsStr || total <= 0) {
+            showToast('splitToast', 'Enter a bill amount and at least one friend\'s roll number.', false);
+            return;
+        }
+
+        const friends = friendsStr.split(',').map(f => f.trim()).filter(Boolean);
+
+        sendSplitBtn.disabled = true;
+        sendSplitBtn.innerHTML = `
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg> Splitting...`;
+
+        try {
+            const res  = await fetch('{% url "bill_split_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken':  getCsrfToken(),
+                },
+                body: JSON.stringify({ total_amount: total, friends, category: 'General', note: 'Bill Split' }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('splitToast', '✅ ' + data.message, true);
+                document.getElementById('liveBalance').textContent = `₹${parseFloat(data.new_balance).toFixed(2)}`;
+                splitTotalInput.value   = '';
+                splitFriendsInput.value = '';
+                splitResult.classList.add('hidden');
+            } else {
+                showToast('splitToast', '❌ ' + data.message, false);
+            }
+        } catch (err) {
+            showToast('splitToast', '❌ Network error. Please try again.', false);
+        } finally {
+            sendSplitBtn.disabled     = false;
+            sendSplitBtn.textContent  = 'Send Payment Requests';
+        }
+    });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// 5. LOAN MODAL & APPLICATION — AJAX
+// ═══════════════════════════════════════════════════════════════
+const openLoanModal  = document.getElementById('openLoanModal');
+const closeLoanModal = document.getElementById('closeLoanModal');
+const loanModal      = document.getElementById('loanModal');
+const loanModalContent = document.getElementById('loanModalContent');
+
+function openLoan() {
+    loanModal.classList.remove('hidden');
+    setTimeout(() => {
+        loanModal.classList.remove('opacity-0');
+        loanModalContent.classList.remove('scale-95');
+        loanModalContent.classList.add('scale-100');
+    }, 10);
+}
+
+function closeLoan() {
+    loanModal.classList.add('opacity-0');
+    loanModalContent.classList.remove('scale-100');
+    loanModalContent.classList.add('scale-95');
+    setTimeout(() => loanModal.classList.add('hidden'), 300);
+}
+
+if (openLoanModal) openLoanModal.addEventListener('click', openLoan);
+if (closeLoanModal) closeLoanModal.addEventListener('click', closeLoan);
+loanModal?.addEventListener('click', (e) => { if (e.target === loanModal) closeLoan(); });
+
+const submitLoanBtn = document.getElementById('submitLoanBtn');
+if (submitLoanBtn) {
+    submitLoanBtn.addEventListener('click', async () => {
+        const amount  = parseFloat(document.getElementById('loanAmount').value);
+        const purpose = document.getElementById('loanPurpose').value.trim();
+
+        if (!amount || amount <= 0 || !purpose) {
+            showToast('loanModalToast', 'Please provide a valid amount and purpose.', false);
+            return;
+        }
+
+        submitLoanBtn.disabled     = true;
+        submitLoanBtn.textContent  = 'Submitting...';
+
+        try {
+            const res  = await fetch('{% url "apply_loan_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken':  getCsrfToken(),
+                },
+                body: JSON.stringify({ amount, purpose }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('loanModalToast', `✅ Loan application #${data.loan_id} submitted!`, true);
+                // Inject new loan card into the list without reload
+                const noMsg = document.getElementById('noLoansMsg');
+                if (noMsg) noMsg.remove();
+
+                const card = document.createElement('div');
+                card.className = 'flex items-center justify-between bg-slate-50 px-4 py-3 rounded-xl border border-slate-100';
+                card.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-slate-700 text-sm">₹${data.amount.toFixed(2)} — ${data.purpose}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">${data.created_at}</p>
+                    </div>
+                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">Pending</span>`;
+                document.getElementById('loanList').prepend(card);
+
+                document.getElementById('loanAmount').value  = '';
+                document.getElementById('loanPurpose').value = '';
+                setTimeout(closeLoan, 1500);
+            } else {
+                showToast('loanModalToast', '❌ ' + data.message, false);
+            }
+        } catch (err) {
+            showToast('loanModalToast', '❌ Network error.', false);
+        } finally {
+            submitLoanBtn.disabled    = false;
+            submitLoanBtn.textContent = 'Submit Application';
+        }
+    });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// 6. ADMIN: APPROVE / REJECT LOANS — AJAX
+// ═══════════════════════════════════════════════════════════════
+async function approveLoan(loanId, status) {
+    try {
+        const res  = await fetch('{% url "approve_loan_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken':  getCsrfToken(),
+            },
+            body: JSON.stringify({ loan_id: loanId, status }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Remove the card from the admin panel
+            const card = document.getElementById(`adminLoan-${loanId}`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transition = 'opacity 0.4s';
+                setTimeout(() => {
+                    card.remove();
+                    // Show "No pending" if list is now empty
+                    const list = document.getElementById('adminLoanList');
+                    if (list && list.children.length === 0) {
+                        list.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">No pending approvals at the moment.</div>';
+                    }
+                }, 400);
+            }
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Network error. Please try again.');
+    }
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// 7. QR CODE SCANNER
+// ═══════════════════════════════════════════════════════════════
+const startScannerBtn    = document.getElementById('startScannerBtn');
+const closeScannerBtn    = document.getElementById('closeScannerBtn');
+const scannerModal       = document.getElementById('scannerModal');
+const scannerModalContent = document.getElementById('scannerModalContent');
+const recipientInput     = document.getElementById('recipientInput');
+const scannerStatus      = document.getElementById('scannerStatus');
+let html5QrcodeScanner   = null;
+
+function openScanner() {
+    scannerModal.classList.remove('hidden');
+    setTimeout(() => {
+        scannerModal.classList.remove('opacity-0');
+        scannerModalContent.classList.remove('scale-95');
+        scannerModalContent.classList.add('scale-100');
+    }, 10);
+
+    html5QrcodeScanner = new Html5Qrcode('qr-reader');
+    const config = { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 };
+
+    html5QrcodeScanner.start(
+        { facingMode: 'environment' },
+        config,
+        (decodedText) => {
+            recipientInput.value = decodedText;
+            recipientInput.classList.add('ring-2', 'ring-green-500', 'bg-green-50');
+            setTimeout(() => recipientInput.classList.remove('ring-2', 'ring-green-500', 'bg-green-50'), 2000);
+            closeScanner();
+        },
+        () => { scannerStatus.textContent = 'Scanning...'; }
+    ).catch((err) => {
+        scannerStatus.textContent = 'Camera blocked. Use http://localhost:8000 for camera access.';
+        scannerStatus.classList.replace('text-slate-500', 'text-red-500');
+    });
+}
+
+function closeScanner() {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+            html5QrcodeScanner.clear();
+        }).catch(() => {});
+    }
+    scannerModal.classList.add('opacity-0');
+    scannerModalContent.classList.remove('scale-100');
+    scannerModalContent.classList.add('scale-95');
+    setTimeout(() => {
+        scannerModal.classList.add('hidden');
+        scannerStatus.textContent = 'Requesting camera access...';
+        scannerStatus.classList.replace('text-red-500', 'text-slate-500');
+    }, 300);
+}
+
+if (startScannerBtn) startScannerBtn.addEventListener('click', openScanner);
+if (closeScannerBtn) closeScannerBtn.addEventListener('click', closeScanner);
+</script>
+{% endblock %}

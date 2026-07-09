@@ -1,0 +1,66 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<section class="bg-slate-50 py-20 lg:py-32 border-b border-slate-200 relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-indigo-100 opacity-50 blur-3xl"></div>
+        <div class="absolute top-48 -left-24 w-72 h-72 rounded-full bg-blue-100 opacity-50 blur-3xl"></div>
+    </div>
+    
+    <div class="container mx-auto px-4 text-center max-w-4xl relative z-10">
+        <div class="inline-block mb-4 px-4 py-1.5 rounded-full bg-indigo-50 text-primary font-semibold text-sm border border-indigo-100">
+            Next Generation Campus Banking
+        </div>
+        <h1 class="text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
+            Welcome to <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 tracking-widest">M U D <span class="text-blue-500 font-black">₹</span> A</span>
+        </h1>
+        <p class="text-lg lg:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+            The Premium Campus Ledger designed exclusively for our institution.<br class="hidden md:block">Manage your campus finances securely and seamlessly.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            {% if not user.is_authenticated %}
+                <a href="{% url 'signup' %}" class="btn btn-primary btn-lg rounded-full px-10 shadow-xl shadow-indigo-500/20 font-semibold border-none">Get Started</a>
+                <a href="{% url 'login' %}" class="btn btn-outline btn-lg rounded-full px-10 border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 font-semibold">Login to Portal</a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg rounded-full px-10 shadow-xl shadow-indigo-500/20 font-semibold border-none">Go to Dashboard <i class="fa-solid fa-arrow-right ml-2"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="py-24 bg-white relative z-10">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl lg:text-4xl font-bold text-slate-900">Why <span class="tracking-widest">M U D <span class="text-primary font-black">₹</span> A</span>?</h2>
+            <p class="mt-4 text-slate-500">Everything you need to manage your campus life.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'login' %}{% endif %}" class="block bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group feature-card">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h4 class="text-xl font-bold text-slate-900 mb-3">Bank-Grade Security</h4>
+                <p class="text-slate-500 leading-relaxed">All accounts are manually verified by administration, ensuring a closed, trusted, and secure network.</p>
+            </a>
+
+            <a href="{% if user.is_authenticated %}{% url 'transfer_money' %}{% else %}{% url 'login' %}{% endif %}" class="block bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group feature-card">
+                <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                </div>
+                <h4 class="text-xl font-bold text-slate-900 mb-3">Instant P2P Transfers</h4>
+                <p class="text-slate-500 leading-relaxed">Send money to your peers instantly for mess fees, books, shared rides, and canteen expenses.</p>
+            </a>
+
+            <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'login' %}{% endif %}" class="block bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group feature-card">
+                <div class="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+                <h4 class="text-xl font-bold text-slate-900 mb-3">Advanced Analytics</h4>
+                <p class="text-slate-500 leading-relaxed">Track your spending habits with intuitive charts, transaction ledgers, and exportable statements.</p>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

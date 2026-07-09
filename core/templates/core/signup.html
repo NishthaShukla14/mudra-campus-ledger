@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
+    <!-- Abstract background -->
+    <div class="absolute inset-0 z-0 opacity-40">
+        <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-indigo-600/20 blur-3xl"></div>
+        <div class="absolute top-60 -right-20 w-80 h-80 rounded-full bg-blue-400/20 blur-3xl"></div>
+    </div>
+
+    <div class="w-full max-w-md z-10">
+        <div class="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl shadow-2xl overflow-hidden">
+            <div class="p-8 sm:p-10">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-extrabold text-slate-800 tracking-tight mb-2">
+                        M U D <span class="text-indigo-600 font-black">₹</span> A
+                    </h1>
+                    <h2 class="text-xl font-bold text-slate-600 tracking-tight mt-4">Create Account</h2>
+                    <p class="text-slate-500 mt-1">Register for your premium campus ledger</p>
+                </div>
+                
+                <form method="post" class="space-y-5">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="relative group">
+                            <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="peer w-full h-14 bg-slate-50 border-2 {% if field.errors %}border-red-300 bg-red-50 focus:border-red-500{% else %}border-slate-100 focus:border-indigo-600 focus:bg-white{% endif %} rounded-xl px-4 text-slate-900 placeholder-transparent focus:outline-none transition-all pt-4 pb-1.5" placeholder="{{ field.label }}" {% if field.field.required %}required{% endif %}>
+                            <label for="{{ field.id_for_label }}" class="absolute left-4 top-1.5 {% if field.errors %}text-red-500{% else %}text-slate-400{% endif %} text-xs font-semibold transition-all peer-placeholder-shown:text-base peer-placeholder-shown:font-normal peer-placeholder-shown:top-4 peer-focus:top-1.5 peer-focus:text-xs peer-focus:font-semibold {% if field.errors %}peer-focus:text-red-600{% else %}peer-focus:text-indigo-600{% endif %} pointer-events-none">{{ field.label }}</label>
+                            
+                            {% if field.help_text %}
+                                <p class="text-[11px] text-slate-400 mt-1.5 ml-1 font-medium">{{ field.help_text }}</p>
+                            {% endif %}
+                            
+                            {% for error in field.errors %}
+                                <p class="text-xs text-red-500 mt-1.5 ml-1 font-semibold"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="w-full h-14 rounded-xl text-lg font-bold shadow-lg shadow-indigo-500/30 border-none mt-4 bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
+                        Submit Registration
+                    </button>
+                </form>
+                
+                <div class="text-center mt-8 pt-6 border-t border-slate-100">
+                    <p class="text-slate-500 font-medium">Already registered? <a href="{% url 'login' %}" class="text-indigo-600 hover:text-indigo-800 font-bold transition-colors">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
+    <!-- Abstract background -->
+    <div class="absolute inset-0 z-0 opacity-40">
+        <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/20 blur-3xl"></div>
+        <div class="absolute top-60 -right-20 w-80 h-80 rounded-full bg-blue-400/20 blur-3xl"></div>
+    </div>
+
+    <div class="w-full max-w-lg z-10">
+        <div class="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl shadow-2xl overflow-hidden">
+            <div class="p-8 sm:p-10">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 text-primary mb-4 shadow-sm">
+                        <i class="fa-solid fa-paper-plane text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Instant Transfer</h2>
+                    <p class="text-slate-500 mt-2">Send money securely to your peers</p>
+                    <div class="mt-4 inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
+                        <i class="fa-solid fa-wallet text-slate-400"></i>
+                        <span class="text-sm font-semibold text-slate-600">Available Balance:</span>
+                        <span class="text-sm font-bold text-slate-900">₹{{ user.balance }}</span>
+                    </div>
+                </div>
+                
+                <form method="post" action="{% url 'transfer_money' %}" class="space-y-5">
+                    {% csrf_token %}
+                    
+                    {% for field in transfer_form %}
+                        <div class="form-control w-full">
+                            <label class="label pb-1">
+                                <span class="label-text font-semibold text-slate-600">{{ field.label }}</span>
+                            </label>
+                            {% if field.name == 'category' %}
+                                <select name="{{ field.name }}" class="select w-full bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-slate-700 font-medium h-14" id="{{ field.id_for_label }}" required>
+                                    {% for choice in field.field.choices %}
+                                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.html_name }}" class="input w-full bg-slate-50 border-slate-200 focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-slate-700 font-medium h-14" id="{{ field.id_for_label }}" required>
+                            {% endif %}
+                            
+                            {% for error in field.errors %}
+                                <p class="text-xs text-red-500 mt-1.5 ml-1 font-semibold"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn btn-primary w-full h-14 rounded-xl text-lg font-bold shadow-lg shadow-indigo-500/30 border-none mt-4">
+                        Proceed Transfer <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
