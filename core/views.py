@@ -651,4 +651,4 @@ def download_statement(request):
 
     return response
 def legal_view(request):
-    return render(request, 'core/legal.html')
+    return render(request, 'core/legal.html')  
