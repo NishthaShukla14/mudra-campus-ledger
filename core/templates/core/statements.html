@@ -1,0 +1,151 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-[#f8fafc] py-10 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
+  
+  <!-- ── Header & Controls ──────────────────────────────────────────────── -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Statements</h1>
+      <p class="mt-1 text-sm text-slate-500">View and download your full transaction history.</p>
+    </div>
+    
+    <div class="flex flex-col sm:flex-row items-center gap-3">
+      <!-- Filter Dropdown -->
+      <div class="form-control w-full sm:w-auto">
+        <select class="select select-bordered bg-white text-slate-700 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-shadow outline-none">
+          <option disabled selected>Filter by Date</option>
+          <option>Last 30 Days</option>
+          <option>Last 3 Months</option>
+          <option>Last 6 Months</option>
+          <option>This Year</option>
+          <option>All Time</option>
+        </select>
+      </div>
+      
+      <!-- Download PDF Button -->
+      <button class="btn border-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 transition-all active:scale-95 w-full sm:w-auto flex items-center gap-2 rounded-xl group">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Download PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Table Section ──────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="table w-full text-left border-collapse">
+        <!-- Table Head -->
+        <thead class="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100">
+          <tr>
+            <th class="py-4 px-6 font-semibold">Date</th>
+            <th class="py-4 px-6 font-semibold">Transaction ID</th>
+            <th class="py-4 px-6 font-semibold">Description</th>
+            <th class="py-4 px-6 font-semibold">Category</th>
+            <th class="py-4 px-6 font-semibold text-right">Amount</th>
+            <th class="py-4 px-6 font-semibold text-center">Status</th>
+          </tr>
+        </thead>
+        
+        <!-- Table Body -->
+        <tbody class="text-sm divide-y divide-slate-100">
+          
+          <!-- Row 1 (Debit) -->
+          <tr class="hover:bg-slate-50/50 transition-colors group">
+            <td class="py-4 px-6 whitespace-nowrap text-slate-500 font-medium">Jul 10, 2026</td>
+            <td class="py-4 px-6 whitespace-nowrap font-mono text-xs text-slate-400 group-hover:text-indigo-500 transition-colors">TXN-549102</td>
+            <td class="py-4 px-6 whitespace-nowrap font-bold text-slate-800">SRMCEM Semester Fee</td>
+            <td class="py-4 px-6 whitespace-nowrap">
+              <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide">Academic</span>
+            </td>
+            <td class="py-4 px-6 whitespace-nowrap text-right font-extrabold text-rose-500">-₹45,000</td>
+            <td class="py-4 px-6 whitespace-nowrap text-center">
+              <div class="badge badge-success badge-sm gap-1 text-white shadow-sm border-0 bg-emerald-500 px-2 py-2.5 font-semibold">
+                Completed
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 2 (Credit) -->
+          <tr class="hover:bg-slate-50/50 transition-colors group">
+            <td class="py-4 px-6 whitespace-nowrap text-slate-500 font-medium">Jul 08, 2026</td>
+            <td class="py-4 px-6 whitespace-nowrap font-mono text-xs text-slate-400 group-hover:text-indigo-500 transition-colors">TXN-882310</td>
+            <td class="py-4 px-6 whitespace-nowrap font-bold text-slate-800">Wallet Top-Up via UPI</td>
+            <td class="py-4 px-6 whitespace-nowrap">
+              <span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide">Deposit</span>
+            </td>
+            <td class="py-4 px-6 whitespace-nowrap text-right font-extrabold text-emerald-500">+₹15,000</td>
+            <td class="py-4 px-6 whitespace-nowrap text-center">
+              <div class="badge badge-success badge-sm gap-1 text-white shadow-sm border-0 bg-emerald-500 px-2 py-2.5 font-semibold">
+                Completed
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 3 (Debit) -->
+          <tr class="hover:bg-slate-50/50 transition-colors group">
+            <td class="py-4 px-6 whitespace-nowrap text-slate-500 font-medium">Jul 06, 2026</td>
+            <td class="py-4 px-6 whitespace-nowrap font-mono text-xs text-slate-400 group-hover:text-indigo-500 transition-colors">TXN-321098</td>
+            <td class="py-4 px-6 whitespace-nowrap font-bold text-slate-800">AcadVault Server Hosting</td>
+            <td class="py-4 px-6 whitespace-nowrap">
+              <span class="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide">Tech / IT</span>
+            </td>
+            <td class="py-4 px-6 whitespace-nowrap text-right font-extrabold text-rose-500">-₹850</td>
+            <td class="py-4 px-6 whitespace-nowrap text-center">
+              <div class="badge badge-success badge-sm gap-1 text-white shadow-sm border-0 bg-emerald-500 px-2 py-2.5 font-semibold">
+                Completed
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 4 (Debit - Pending) -->
+          <tr class="hover:bg-slate-50/50 transition-colors group">
+            <td class="py-4 px-6 whitespace-nowrap text-slate-500 font-medium">Jul 03, 2026</td>
+            <td class="py-4 px-6 whitespace-nowrap font-mono text-xs text-slate-400 group-hover:text-indigo-500 transition-colors">TXN-109432</td>
+            <td class="py-4 px-6 whitespace-nowrap font-bold text-slate-800">Hostel Mess Dues</td>
+            <td class="py-4 px-6 whitespace-nowrap">
+              <span class="bg-orange-50 text-orange-700 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide">Facilities</span>
+            </td>
+            <td class="py-4 px-6 whitespace-nowrap text-right font-extrabold text-rose-500">-₹3,500</td>
+            <td class="py-4 px-6 whitespace-nowrap text-center">
+              <div class="badge badge-warning badge-sm gap-1 text-white shadow-sm border-0 bg-amber-500 px-2 py-2.5 font-semibold">
+                Pending
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 5 (Credit) -->
+          <tr class="hover:bg-slate-50/50 transition-colors group">
+            <td class="py-4 px-6 whitespace-nowrap text-slate-500 font-medium">Jun 28, 2026</td>
+            <td class="py-4 px-6 whitespace-nowrap font-mono text-xs text-slate-400 group-hover:text-indigo-500 transition-colors">TXN-661290</td>
+            <td class="py-4 px-6 whitespace-nowrap font-bold text-slate-800">Scholarship Disbursement</td>
+            <td class="py-4 px-6 whitespace-nowrap">
+              <span class="bg-sky-50 text-sky-700 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide">Refund / Reward</span>
+            </td>
+            <td class="py-4 px-6 whitespace-nowrap text-right font-extrabold text-emerald-500">+₹12,000</td>
+            <td class="py-4 px-6 whitespace-nowrap text-center">
+              <div class="badge badge-success badge-sm gap-1 text-white shadow-sm border-0 bg-emerald-500 px-2 py-2.5 font-semibold">
+                Completed
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Pagination / Footer ──────────────────────────────────────────── -->
+    <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white">
+      <span class="text-xs text-slate-500 font-medium">Showing 1 to 5 of 24 transactions</span>
+      <div class="join">
+        <button class="join-item btn btn-sm bg-white border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-semibold">«</button>
+        <button class="join-item btn btn-sm bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-700 shadow-sm font-bold">Page 1</button>
+        <button class="join-item btn btn-sm bg-white border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-semibold">»</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

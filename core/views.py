@@ -651,4 +651,32 @@ def download_statement(request):
 
     return response
 def legal_view(request):
-    return render(request, 'core/legal.html')  
+    return render(request, 'core/legal.html') 
+ 
+@login_required
+def balances(request):
+    return render(request, 'core/balances.html')
+
+@login_required
+def statements(request):
+    return render(request, 'core/statements.html')
+
+@login_required
+def send_money_page(request):
+    return render(request, 'core/send_money.html')
+
+@login_required
+def beneficiaries(request):
+    return render(request, 'core/beneficiaries.html')
+
+@login_required
+def fee_payment(request):
+    return render(request, 'core/fee_payment.html')
+
+@login_required
+def virtual_card(request):
+    return render(request, 'core/virtual_card.html')
+
+@login_required
+def helpdesk(request):
+    return render(request, 'core/helpdesk.html')

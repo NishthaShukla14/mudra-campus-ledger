@@ -1,0 +1,235 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 flex justify-center items-start font-sans text-slate-800">
+  
+  <div class="w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden relative border border-slate-100">
+    
+    <!-- ── Header ───────────────────────────────────────────────────────── -->
+    <div class="bg-indigo-600 px-6 py-8 text-center relative overflow-hidden">
+      <!-- Decorative background elements -->
+      <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500 rounded-full blur-2xl opacity-50"></div>
+      <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-indigo-700 rounded-full blur-2xl opacity-50"></div>
+      
+      <div class="w-16 h-16 bg-white/20 rounded-full mx-auto flex items-center justify-center backdrop-blur-md mb-3 relative z-10 shadow-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-white relative z-10 tracking-wide">Send Money</h2>
+      <p class="text-indigo-100 text-sm mt-1 relative z-10">Fast & zero-fee campus transfers</p>
+    </div>
+
+    <div class="p-6">
+      
+      <!-- ── Custom Tabs ────────────────────────────────────────────────── -->
+      <div class="flex bg-slate-100 rounded-2xl p-1 mb-8 shadow-inner">
+        <button id="tab-direct" class="flex-1 text-sm font-semibold py-2.5 rounded-xl transition-all duration-300 bg-white text-indigo-700 shadow-sm" onclick="switchTab('direct')">
+          Direct Transfer
+        </button>
+        <button id="tab-split" class="flex-1 text-sm font-semibold py-2.5 rounded-xl transition-all duration-300 text-slate-500 hover:text-slate-700" onclick="switchTab('split')">
+          Split Bill
+        </button>
+      </div>
+
+      <!-- ================================================================
+           DIRECT TRANSFER SECTION
+      ================================================================ -->
+      <div id="section-direct" class="block animate-fade-in">
+        
+        <!-- Big Amount Input -->
+        <div class="text-center mb-8">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Enter Amount</p>
+          <div class="flex items-center justify-center">
+            <span class="text-3xl font-bold text-slate-400 mr-1">₹</span>
+            <input type="number" placeholder="0" class="w-full text-5xl font-extrabold text-slate-800 bg-transparent border-none focus:ring-0 text-center p-0 placeholder-slate-300 outline-none" style="max-width: 200px;">
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <!-- Student ID -->
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <div class="w-8 h-8 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+            <input type="text" placeholder="Recipient Student ID (e.g. CS2024-102)" class="w-full pl-14 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all outline-none text-slate-700 placeholder-slate-400">
+          </div>
+
+          <!-- Note -->
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <div class="w-8 h-8 bg-orange-50 rounded-full flex items-center justify-center text-orange-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+              </div>
+            </div>
+            <input type="text" placeholder="What's this for? (Optional)" class="w-full pl-14 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all outline-none text-slate-700 placeholder-slate-400">
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================================
+           SPLIT BILL SECTION
+      ================================================================ -->
+      <div id="section-split" class="hidden animate-fade-in">
+        
+        <!-- Total Bill Amount -->
+        <div class="text-center mb-6">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Total Bill Amount</p>
+          <div class="flex items-center justify-center bg-slate-50 border border-slate-200 rounded-2xl py-3 mx-8 focus-within:border-indigo-500 focus-within:bg-white transition-colors">
+            <span class="text-xl font-bold text-slate-400 ml-4 mr-1">₹</span>
+            <input type="number" placeholder="450" class="w-full text-2xl font-bold text-slate-800 bg-transparent border-none focus:ring-0 text-left p-0 placeholder-slate-300 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-slate-700">Split with Roommates</h3>
+            <button class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 border border-indigo-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+              Add
+            </button>
+          </div>
+          
+          <div class="space-y-3 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+            <!-- Friend 1 -->
+            <label class="flex items-center justify-between p-3 border border-slate-100 rounded-2xl hover:bg-slate-50 cursor-pointer transition-colors has-[:checked]:bg-indigo-50/40 has-[:checked]:border-indigo-200 group">
+              <div class="flex items-center gap-3">
+                <input type="checkbox" checked class="checkbox checkbox-sm checkbox-primary border-slate-300 rounded-md" />
+                <div class="avatar placeholder">
+                  <div class="bg-indigo-100 text-indigo-600 w-9 rounded-full">
+                    <span class="text-xs font-bold">AK</span>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">Aarav Kumar</p>
+                  <p class="text-xs text-slate-500">CS2024-045</p>
+                </div>
+              </div>
+              <div class="text-sm font-bold text-slate-700">₹150</div>
+            </label>
+
+            <!-- Friend 2 -->
+            <label class="flex items-center justify-between p-3 border border-slate-100 rounded-2xl hover:bg-slate-50 cursor-pointer transition-colors has-[:checked]:bg-indigo-50/40 has-[:checked]:border-indigo-200 group">
+              <div class="flex items-center gap-3">
+                <input type="checkbox" checked class="checkbox checkbox-sm checkbox-primary border-slate-300 rounded-md" />
+                <div class="avatar placeholder">
+                  <div class="bg-emerald-100 text-emerald-600 w-9 rounded-full">
+                    <span class="text-xs font-bold">SM</span>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">Siddharth Menon</p>
+                  <p class="text-xs text-slate-500">CS2024-089</p>
+                </div>
+              </div>
+              <div class="text-sm font-bold text-slate-700">₹150</div>
+            </label>
+
+            <!-- You -->
+            <div class="flex items-center justify-between p-3 border border-slate-100 rounded-2xl bg-slate-50">
+              <div class="flex items-center gap-3 pl-8">
+                <div class="avatar placeholder">
+                  <div class="bg-slate-200 text-slate-600 w-9 rounded-full">
+                    <span class="text-xs font-bold">You</span>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">Your Share</p>
+                </div>
+              </div>
+              <div class="text-sm font-bold text-slate-700">₹150</div>
+            </div>
+          </div>
+          
+          <div class="mt-4 bg-orange-50/80 border border-orange-100 text-orange-700 p-3 rounded-xl text-xs font-medium flex gap-2 items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>Splitting ₹450 equally among 3 people. A request will be sent to their MUDRA accounts.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Common Proceed Button ──────────────────────────────────────── -->
+      <button class="w-full mt-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group border-0">
+        Proceed securely
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </button>
+
+      <div class="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 font-medium uppercase tracking-wide">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        Secured by MUDRA Ledger
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Custom scrollbar for roommate list */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+  }
+</style>
+
+<script>
+  function switchTab(tab) {
+    const btnDirect = document.getElementById('tab-direct');
+    const btnSplit = document.getElementById('tab-split');
+    const secDirect = document.getElementById('section-direct');
+    const secSplit = document.getElementById('section-split');
+
+    if (tab === 'direct') {
+      // Button Styles
+      btnDirect.classList.add('bg-white', 'text-indigo-700', 'shadow-sm');
+      btnDirect.classList.remove('text-slate-500', 'hover:text-slate-700');
+      
+      btnSplit.classList.remove('bg-white', 'text-indigo-700', 'shadow-sm');
+      btnSplit.classList.add('text-slate-500', 'hover:text-slate-700');
+      
+      // Section Visibility
+      secDirect.classList.remove('hidden');
+      secDirect.classList.add('block');
+      secSplit.classList.remove('block');
+      secSplit.classList.add('hidden');
+    } else {
+      // Button Styles
+      btnSplit.classList.add('bg-white', 'text-indigo-700', 'shadow-sm');
+      btnSplit.classList.remove('text-slate-500', 'hover:text-slate-700');
+      
+      btnDirect.classList.remove('bg-white', 'text-indigo-700', 'shadow-sm');
+      btnDirect.classList.add('text-slate-500', 'hover:text-slate-700');
+      
+      // Section Visibility
+      secSplit.classList.remove('hidden');
+      secSplit.classList.add('block');
+      secDirect.classList.remove('block');
+      secDirect.classList.add('hidden');
+    }
+  }
+</script>
+{% endblock %}

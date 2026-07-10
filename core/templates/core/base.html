@@ -77,8 +77,8 @@
                         My Accounts <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </div>
                     <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4">
-                        <li><a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'login' %}{% endif %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-wallet text-slate-400 w-5"></i> Balances</a></li>
-                        <li><a onclick="showDevToast('Account Statements')" class="hover:bg-slate-50 rounded-md py-2 cursor-pointer"><i class="fa-solid fa-file-invoice text-slate-400 w-5"></i> Statements</a></li>
+                        <li><a href="{% url 'balances' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-wallet text-slate-400 w-5"></i> Balances</a></li>
+                        <li><a href="{% url 'statements' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-file-invoice text-slate-400 w-5"></i> Statements</a></li>
                     </ul>
                 </li>
                 
@@ -87,8 +87,8 @@
                         Fund Transfer <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </div>
                     <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4">
-                        <li><a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'login' %}{% endif %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-paper-plane text-slate-400 w-5"></i> Send Money</a></li>
-                        <li><a onclick="showDevToast('Beneficiary Management')" class="hover:bg-slate-50 rounded-md py-2 cursor-pointer"><i class="fa-solid fa-users text-slate-400 w-5"></i> Beneficiaries</a></li>
+                        <li><a href="{% url 'send_money_page' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-paper-plane text-slate-400 w-5"></i> Send Money</a></li>
+                        <li><a href="{% url 'beneficiaries' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-users text-slate-400 w-5"></i> Beneficiaries</a></li>
                     </ul>
                 </li>
                 
@@ -97,9 +97,9 @@
                         e-Services <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </div>
                     <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4">
-                        <li><a onclick="showDevToast('Fee Payment Gateway')" class="hover:bg-slate-50 rounded-md py-2 cursor-pointer"><i class="fa-solid fa-graduation-cap text-slate-400 w-5"></i> Fee Payment</a></li>
-                        <li><a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'login' %}{% endif %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-credit-card text-slate-400 w-5"></i> Virtual Card</a></li>
-                        <li><a onclick="showDevToast('24/7 Helpdesk')" class="hover:bg-slate-50 rounded-md py-2 cursor-pointer"><i class="fa-solid fa-headset text-slate-400 w-5"></i> Helpdesk</a></li>
+                        <li><a href="{% url 'fee_payment' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-graduation-cap text-slate-400 w-5"></i> Fee Payment</a></li>
+                        <li><a href="{% url 'virtual_card' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-credit-card text-slate-400 w-5"></i> Virtual Card</a></li>
+                        <li><a href="{% url 'helpdesk' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-headset text-slate-400 w-5"></i> Helpdesk</a></li>
                     </ul>
                 </li>
             </ul>
@@ -145,7 +145,7 @@
             <h6 class="footer-title text-slate-100 opacity-100 font-bold">SERVICES</h6> 
             <a href="{% url 'transfer_money' %}" class="link link-hover text-slate-400">Fund Transfers</a>
             <a href="{% url 'dashboard' %}" class="link link-hover text-slate-400">Campus Cards</a>
-            <a onclick="showDevToast('Fee Payment')" class="link link-hover text-slate-400 cursor-pointer">Fee Payment</a>
+            <a href="{% url 'fee_payment' %}" class="link link-hover text-slate-400">Fee Payment</a>
         </nav> 
         <nav>
             <h6 class="footer-title text-slate-100 opacity-100 font-bold">LEGAL</h6> 

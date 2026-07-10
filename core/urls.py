@@ -46,5 +46,12 @@ urlpatterns = [
 
     # QR code data for logged-in user
     path('api/my-qr/',         views.get_user_qr,        name='get_user_qr'),
+    path('balances/', views.balances, name='balances'),
+    path('statements/', views.statements, name='statements'),
+    path('send-money/', views.send_money_page, name='send_money_page'),
+    path('beneficiaries/', views.beneficiaries, name='beneficiaries'),
+    path('fee-payment/', views.fee_payment, name='fee_payment'),
+    path('virtual-card/', views.virtual_card, name='virtual_card'),
+    path('helpdesk/', views.helpdesk, name='helpdesk'),
 ]
 path('legal/', views.legal_view, name='legal'),
