@@ -13,7 +13,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 
-from .models import BankUser, Transaction, LoanRequest
+from .models import BankUser, Transaction, LoanRequest, PaymentRequest, SupportTicket
 from .forms import BankUserCreationForm, TransferForm
 from decimal import Decimal
 
@@ -21,6 +21,7 @@ import json
 import csv
 import datetime
 import hashlib
+import math
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -60,6 +61,16 @@ def signup_view(request):
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = False   # Requires admin activation
+            
+            face_desc_raw = request.POST.get('face_descriptor', '')
+            if face_desc_raw:
+                try:
+                    desc_list = json.loads(face_desc_raw)
+                    if isinstance(desc_list, list) and len(desc_list) == 128:
+                        user.face_signature = json.dumps(desc_list)
+                except Exception:
+                    pass
+                    
             user.save()
             messages.success(
                 request,
@@ -114,7 +125,8 @@ def dashboard(request):
     trend_data   = []
 
     if all_transactions.exists():
-        current_bal = float(user.balance)
+        # current_bal = float(user.wallet_balance)
+        current_bal = float(user.wallet_balance)
         historical_balances = [current_bal]
         labels = ["Now"]
 
@@ -138,6 +150,7 @@ def dashboard(request):
 
     # ── Transfer Form (for non-AJAX fallback) ────────────────────────────────
     transfer_form = TransferForm()
+    pending_requests = PaymentRequest.objects.filter(payer=user, status='Pending').order_by('-created_at')
 
     context = {
         'transfer_form':       transfer_form,
@@ -150,6 +163,7 @@ def dashboard(request):
         'trend_data':          json.dumps(trend_data),
         'active_loans':        active_loans,
         'pending_all_loans':   pending_all_loans,
+        'pending_requests': pending_requests,
     }
     return render(request, 'core/dashboard.html', context)
 
@@ -175,7 +189,8 @@ def transfer_money(request):
 
             if recipient_roll == user.roll_number:
                 messages.error(request, "You cannot transfer money to yourself.")
-            elif user.balance < amount:
+            # elif user.wallet_balance < amount:
+            elif user.wallet_balance < amount:
                 messages.error(request, "Insufficient balance.")
             else:
                 try:
@@ -183,8 +198,8 @@ def transfer_money(request):
                         sender    = BankUser.objects.select_for_update().get(id=user.id)
                         recipient = BankUser.objects.select_for_update().get(roll_number=recipient_roll)
 
-                        sender.balance    -= amount
-                        recipient.balance += amount
+                        sender.wallet_balance    -= amount
+                        recipient.wallet_balance += amount
                         sender.save()
                         recipient.save()
 
@@ -210,6 +225,7 @@ def transfer_money(request):
                     messages.error(request, f"{field.capitalize()}: {error}")
     else:
         transfer_form = TransferForm()
+    pending_requests = PaymentRequest.objects.filter(payer=user, status='Pending').order_by('-created_at')
 
     return render(request, 'core/transfer.html', {'transfer_form': transfer_form})
 
@@ -257,9 +273,9 @@ def send_money_api(request):
         with db_transaction.atomic():
             sender = BankUser.objects.select_for_update().get(id=request.user.id)
 
-            if sender.balance < amount:
+            if sender.wallet_balance < amount:
                 return _json_error(
-                    f"Insufficient balance. Your balance is ₹{sender.balance}."
+                    f"Insufficient balance. Your balance is ₹{sender.wallet_balance}."
                 )
 
             try:
@@ -270,10 +286,10 @@ def send_money_api(request):
             except BankUser.DoesNotExist:
                 return _json_error("Recipient not found or account not active.")
 
-            sender.balance    -= amount
-            recipient.balance += amount
-            sender.save(update_fields=['balance'])
-            recipient.save(update_fields=['balance'])
+            sender.wallet_balance    -= amount
+            recipient.wallet_balance += amount
+            sender.save(update_fields=['wallet_balance'])
+            recipient.save(update_fields=['wallet_balance'])
 
             txn = Transaction.objects.create(
                 sender=sender,
@@ -286,9 +302,12 @@ def send_money_api(request):
 
         return _json_ok({
             'message':     f"₹{amount:.2f} sent to {recipient.name} ({recipient.roll_number}).",
-            'new_balance': float(sender.balance),
+            'new_balance': float(sender.wallet_balance),
             'txn_id':      txn.id,
             'timestamp':   txn.timestamp.strftime('%b %d, %H:%M'),
+            'amount':      float(amount),
+            'category':    category,
+            'receiver_name': recipient.name,
         })
 
     except json.JSONDecodeError:
@@ -343,24 +362,15 @@ def bill_split_api(request):
         total_people = len(friend_rolls) + 1  # friends + current user
         per_person   = round(total_amount / total_people, 2)
 
-        # ── Atomic Multi-Transfer ─────────────────────────────────────────────
+        # ── Atomic Multi-Transfer -> Now Payment Requests ────────────────────────
         with db_transaction.atomic():
-            sender = BankUser.objects.select_for_update().get(id=request.user.id)
+            sender = request.user
 
-            # The sender pays (total_people - 1) shares = total - own_share
-            sender_deduction = round(per_person * len(friend_rolls), 2)
-
-            if sender.balance < sender_deduction:
-                return _json_error(
-                    f"Insufficient balance. You need ₹{sender_deduction:.2f} to cover your friends' shares. "
-                    f"Your balance: ₹{sender.balance}."
-                )
-
-            # Validate all friends exist and are active before touching balances
+            # Validate all friends exist and are active
             recipients = []
             for roll in friend_rolls:
                 try:
-                    r = BankUser.objects.select_for_update().get(
+                    r = BankUser.objects.get(
                         roll_number=roll, is_active=True
                     )
                     recipients.append(r)
@@ -369,31 +379,23 @@ def bill_split_api(request):
                         f"User with roll number '{roll}' not found or not active."
                     )
 
-            # Perform transfers
-            sender.balance -= sender_deduction
-            sender.save(update_fields=['balance'])
-
+            # Create payment requests (sender is requesting money from friends)
             for recipient in recipients:
-                recipient.balance += per_person
-                recipient.save(update_fields=['balance'])
-
-                Transaction.objects.create(
-                    sender=sender,
-                    receiver=recipient,
+                PaymentRequest.objects.create(
+                    requester=sender,
+                    payer=recipient,
                     amount=per_person,
-                    category=category,
-                    transaction_type='Bill Split',
-                    note=note,
+                    note=note
                 )
 
         return _json_ok({
             'message':     (
-                f"Bill split done! ₹{per_person:.2f} sent to each of "
+                f"Payment requests of ₹{per_person:.2f} sent to "
                 f"{len(recipients)} friends."
             ),
             'per_person':  per_person,
             'total_people': total_people,
-            'new_balance': float(sender.balance),
+            'new_balance': float(sender.wallet_balance),
         })
 
     except json.JSONDecodeError:
@@ -486,8 +488,8 @@ def approve_loan_api(request):
             if status == 'Approved':
                 # Credit the loan amount atomically
                 applicant = BankUser.objects.select_for_update().get(id=loan.user.id)
-                applicant.balance += loan.amount
-                applicant.save(update_fields=['balance'])
+                applicant.wallet_balance += loan.amount
+                applicant.save(update_fields=['wallet_balance'])
 
                 # Log as a Loan transaction (system → applicant)
                 Transaction.objects.create(
@@ -534,9 +536,10 @@ def face_login_verify(request):
     try:
         data        = json.loads(request.body)
         roll_number = data.get('roll_number', '').strip()
+        descriptor = data.get('descriptor', None)
 
-        if not roll_number:
-            return _json_error("Roll number is required for biometric verification.")
+        if not roll_number or not descriptor:
+            return _json_error("Roll number and face descriptor are required.")
 
         # ── Look up user ──────────────────────────────────────────────────────
         try:
@@ -547,18 +550,23 @@ def face_login_verify(request):
         if not user.is_active:
             return _json_error("Account is not yet activated. Please contact admin.")
 
-        # ── Mock biometric check ──────────────────────────────────────────────
-        # Generate or compare face_signature (SHA-256 of roll_number as mock)
-        mock_hash = hashlib.sha256(roll_number.encode()).hexdigest()
-
+        # ── Biometric check ──────────────────────────────────────────────
         if user.face_signature:
-            # Signature already stored — compare
-            if user.face_signature != mock_hash:
-                return _json_error("Biometric verification failed.")
+            try:
+                stored_descriptor = json.loads(user.face_signature)
+                if len(stored_descriptor) != 128 or len(descriptor) != 128:
+                    return _json_error("Invalid biometric data.")
+                    
+                # Calculate Euclidean distance
+                distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(stored_descriptor, descriptor)))
+                
+                # Face-api.js usually recommends a threshold of 0.6
+                if distance > 0.55:
+                    return _json_error("Face does not match. Please try again.")
+            except Exception as e:
+                return _json_error("Error reading stored biometrics. Please re-register.")
         else:
-            # First-time FaceID: store the mock hash (enroll)
-            user.face_signature = mock_hash
-            user.save(update_fields=['face_signature'])
+            return _json_error("Face Unlock is not set up for this account. Please login with password and register FaceID from the dashboard.")
 
         # ── Log the user in ───────────────────────────────────────────────────
         # We bypass the normal authentication backend check since this is a
@@ -575,6 +583,31 @@ def face_login_verify(request):
         return _json_error("Invalid JSON body.")
     except Exception as e:
         return _json_error(f"Server error: {str(e)}", status=500)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AJAX API: REGISTER FACEID
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def register_face_api(request):
+    try:
+        data = json.loads(request.body)
+        descriptor = data.get('descriptor')
+        
+        if not descriptor or len(descriptor) != 128:
+            return _json_error("Invalid face descriptor. Please make sure your face is clearly visible.")
+            
+        user = request.user
+        user.face_signature = json.dumps(descriptor)
+        user.save(update_fields=['face_signature'])
+        
+        return _json_ok({'message': "Face Unlock successfully registered!"})
+    except json.JSONDecodeError:
+        return _json_error("Invalid JSON.")
+    except Exception as e:
+        return _json_error(f"Error: {str(e)}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -646,7 +679,8 @@ def download_statement(request):
         ])
 
     writer.writerow([])
-    writer.writerow(['Current Balance:', f"Rs. {user.balance}"])
+    # writer.writerow(['Current Balance:', f"Rs. {user.wallet_balance}"])
+    writer.writerow(['Current Balance:', f"Rs. {user.wallet_balance}"])
     writer.writerow(['— End of Statement —'])
 
     return response
@@ -655,11 +689,25 @@ def legal_view(request):
  
 @login_required
 def balances(request):
-    return render(request, 'core/balances.html')
+    user = request.user
+    sent_transactions = Transaction.objects.filter(sender=user)
+    received_transactions = Transaction.objects.filter(receiver=user)
+    total_spent = sent_transactions.aggregate(Sum('amount'))['amount__sum'] or 0
+    total_received = received_transactions.aggregate(Sum('amount'))['amount__sum'] or 0
+    return render(request, 'core/balances.html', {
+        'total_spent': total_spent,
+        'total_received': total_received
+    })
 
 @login_required
 def statements(request):
-    return render(request, 'core/statements.html')
+    user = request.user
+    sent_txns = Transaction.objects.filter(sender=user)
+    recv_txns = Transaction.objects.filter(receiver=user)
+    all_txns  = (sent_txns | recv_txns).order_by('-timestamp')
+    return render(request, 'core/statements.html', {
+        'transactions': all_txns
+    })
 
 @login_required
 def send_money_page(request):
@@ -667,16 +715,198 @@ def send_money_page(request):
 
 @login_required
 def beneficiaries(request):
-    return render(request, 'core/beneficiaries.html')
+    user = request.user
+    # Get distinct receivers from sent transactions
+    sent_txns = Transaction.objects.filter(sender=user).select_related('receiver')
+    # Use a dictionary to keep unique recipients
+    beneficiaries_dict = {}
+    for txn in sent_txns:
+        if txn.receiver.roll_number not in beneficiaries_dict:
+            beneficiaries_dict[txn.receiver.roll_number] = txn.receiver
+            
+    return render(request, 'core/beneficiaries.html', {
+        'beneficiaries': beneficiaries_dict.values()
+    })
 
 @login_required
 def fee_payment(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            amount_val = float(data.get('amount', 0))
+            amount = Decimal(str(amount_val))
+            fee_type = data.get('fee_type', 'Tuition Fee')
+            
+            if amount <= 0:
+                return _json_error("Amount must be greater than zero.")
+                
+            with db_transaction.atomic():
+                user = BankUser.objects.select_for_update().get(id=request.user.id)
+                if user.wallet_balance < amount:
+                    return _json_error("Insufficient balance for this payment.")
+                    
+                user.wallet_balance -= amount
+                user.save(update_fields=['wallet_balance'])
+                
+                # System (admin) is the receiver for fee
+                admin_user = BankUser.objects.filter(is_superuser=True).first()
+                if not admin_user:
+                    admin_user = user # fallback to self if no admin exists
+                    
+                Transaction.objects.create(
+                    sender=user,
+                    receiver=admin_user,
+                    amount=amount,
+                    category='Education',
+                    transaction_type='Transfer',
+                    note=fee_type
+                )
+                
+            return _json_ok({
+                'message': f"{fee_type} of ₹{amount} paid successfully.",
+                'new_balance': float(user.wallet_balance)
+            })
+            
+        except Exception as e:
+            return _json_error(f"Error processing payment: {str(e)}")
+            
     return render(request, 'core/fee_payment.html')
 
 @login_required
 def virtual_card(request):
-    return render(request, 'core/virtual_card.html')
+    user = request.user
+    # 7-day balance trend mock data
+    trend_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    current_bal = float(user.wallet_balance)
+    trend_data = [
+        max(0, current_bal - 400), max(0, current_bal - 300), max(0, current_bal - 250),
+        max(0, current_bal - 200), max(0, current_bal - 150), max(0, current_bal - 50), current_bal
+    ]
+    
+    context = {
+        'trend_labels': trend_labels,
+        'trend_data': trend_data,
+    }
+    return render(request, 'core/virtual_card.html', context)
 
 @login_required
 def helpdesk(request):
-    return render(request, 'core/helpdesk.html')
+    user = request.user
+    
+    if request.method == 'POST':
+        subject = request.POST.get('subject', '').strip()
+        category = request.POST.get('category', '').strip()
+        priority = request.POST.get('priority', 'Medium').strip()
+        description = request.POST.get('description', '').strip()
+        
+        if subject and category and description:
+            # Generate a unique ticket ID (BNK-TKT-XXXXXX)
+            import random
+            import time
+            ticket_id = f"BNK-TKT-{int(time.time())}{random.randint(10, 99)}"
+            
+            SupportTicket.objects.create(
+                user=user,
+                ticket_id=ticket_id,
+                subject=subject,
+                category=category,
+                priority=priority.capitalize(),
+                description=description
+            )
+            messages.success(request, f"Ticket {ticket_id} submitted successfully.")
+            return redirect('helpdesk')
+        else:
+            messages.error(request, "Please fill out all required fields.")
+
+    # GET request: fetch tickets and stats
+    tickets = SupportTicket.objects.filter(user=user)
+    open_count = tickets.filter(status='Open').count() + tickets.filter(status='In Progress').count()
+    resolved_count = tickets.filter(status='Resolved').count()
+
+    context = {
+        'tickets': tickets,
+        'open_count': open_count,
+        'resolved_count': resolved_count
+    }
+    return render(request, 'core/helpdesk.html', context)
+
+def verify_roll_number(request):
+    roll = request.GET.get('roll_number', '')
+    if len(roll) == 13:
+        try:
+            user = BankUser.objects.get(roll_number=roll)
+            name = user.name
+            return JsonResponse({'success': True, 'name': name})
+        except BankUser.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Account not found!'})
+    return JsonResponse({'success': False, 'message': 'Invalid length'})
+# ─────────────────────────────────────────────────────────────────────────────
+# AJAX API: PAYMENT REQUEST APPROVE/DECLINE
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def respond_payment_api(request):
+    try:
+        data = json.loads(request.body)
+        req_id = data.get('request_id')
+        action = data.get('action') # 'approve' or 'decline'
+
+        with db_transaction.atomic():
+            pay_req = PaymentRequest.objects.select_for_update().get(id=req_id, payer=request.user)
+
+            if pay_req.status != 'Pending':
+                return _json_error("This request is already processed.")
+
+            if action == 'decline':
+                pay_req.status = 'Declined'
+                pay_req.save(update_fields=['status'])
+                return _json_ok({'message': "Payment request declined."})
+            elif action == 'approve':
+                if request.user.wallet_balance < pay_req.amount:
+                    return _json_error("Insufficient balance to approve this request.")
+                
+                # Transfer money
+                payer = BankUser.objects.select_for_update().get(id=request.user.id)
+                requester = BankUser.objects.select_for_update().get(id=pay_req.requester.id)
+
+                payer.wallet_balance -= pay_req.amount
+                requester.wallet_balance += pay_req.amount
+                payer.save(update_fields=['wallet_balance'])
+                requester.save(update_fields=['wallet_balance'])
+
+                pay_req.status = 'Paid'
+                pay_req.save(update_fields=['status'])
+
+                txn = Transaction.objects.create(
+                    sender=payer,
+                    receiver=requester,
+                    amount=pay_req.amount,
+                    category='General',
+                    transaction_type='Bill Split',
+                    note=pay_req.note,
+                )
+                
+                return _json_ok({
+                    'message': "Payment approved and sent successfully.", 
+                    'new_balance': float(payer.wallet_balance),
+                    'amount': float(pay_req.amount),
+                    'category': 'General',
+                    'receiver_name': requester.name,
+                    'timestamp': txn.timestamp.strftime('%b %d, %H:%M')
+                })
+            else:
+                return _json_error("Invalid action.")
+    except PaymentRequest.DoesNotExist:
+        return _json_error("Request not found.")
+    except Exception as e:
+        return _json_error(f"Server error: {str(e)}", status=500)
+
+def terms_view(request):
+    return render(request, 'core/terms.html')
+
+def privacy_view(request):
+    return render(request, 'core/privacy.html')
+
+def security_view(request):
+    return render(request, 'core/security.html')

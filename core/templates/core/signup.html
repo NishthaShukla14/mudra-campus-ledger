@@ -36,7 +36,15 @@
                             {% endfor %}
                         </div>
                     {% endfor %}
+                    <input type="hidden" name="face_descriptor" id="face_descriptor_input">
                     
+                    <div class="mt-4 mb-4">
+                        <button type="button" id="openFaceId" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
+                            <i class="fa-solid fa-face-smile"></i> Setup FaceID (Optional)
+                        </button>
+                        <p id="face-setup-status" class="text-xs text-center mt-2 text-slate-500 font-medium"></p>
+                    </div>
+
                     <button type="submit" class="w-full h-14 rounded-xl text-lg font-bold shadow-lg shadow-indigo-500/30 border-none mt-4 bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
                         Submit Registration
                     </button>
@@ -49,4 +57,153 @@
         </div>
     </div>
 </div>
+
+<!-- FaceID Setup Modal -->
+<div id="faceIdModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div id="modalContent" class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm flex flex-col items-center relative transform scale-95 transition-transform duration-300">
+        <button id="closeFaceId" type="button" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <h3 class="text-xl font-bold text-slate-800 mb-4">Setup FaceID</h3>
+        
+        <div class="relative w-56 h-56 rounded-full overflow-hidden border-4 border-indigo-100 shadow-inner mb-6 bg-slate-100 flex items-center justify-center">
+            <video id="cameraFeed" autoplay playsinline muted class="object-cover w-full h-full transform scale-x-[-1] hidden"></video>
+            <div id="cameraLoading" class="text-slate-400 text-sm text-center px-4">
+                Click "Start Camera"
+            </div>
+            <div id="scannerLine" class="absolute left-0 w-full h-1 bg-green-400 shadow-[0_0_15px_rgba(74,222,128,1)] hidden z-10"></div>
+        </div>
+
+        <p id="statusText" class="text-sm font-medium text-slate-500 mb-4 h-5 text-center">Look directly at the camera.</p>
+        <div id="faceToast" class="hidden w-full mb-3 px-4 py-2 rounded-lg text-xs font-semibold text-center"></div>
+
+        <button type="button" id="startCameraBtn" class="w-full bg-slate-700 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition-all">Start Camera</button>
+        <button type="button" id="scanBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all hidden mt-2">Capture & Save</button>
+    </div>
+</div>
+
+<style>
+    @keyframes scan {
+        0%   { top: 0;    opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
+    }
+    .scanning-line { animation: scan 2s infinite linear; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+<script>
+    const openBtn      = document.getElementById('openFaceId');
+    const closeBtn     = document.getElementById('closeFaceId');
+    const modal        = document.getElementById('faceIdModal');
+    const modalContent = document.getElementById('modalContent');
+    const video        = document.getElementById('cameraFeed');
+    const cameraLoading = document.getElementById('cameraLoading');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const scanBtn      = document.getElementById('scanBtn');
+    const statusText   = document.getElementById('statusText');
+    const scannerLine  = document.getElementById('scannerLine');
+    let stream         = null;
+    let modelsLoaded   = false;
+
+    async function loadModels() {
+        if (modelsLoaded) return;
+        statusText.textContent = "Loading Face AI models...";
+        const modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl),
+            faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl),
+            faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl)
+        ]);
+        modelsLoaded = true;
+        statusText.textContent = "Please look directly at the camera.";
+    }
+
+    function openModal() {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }, 10);
+    }
+
+    function closeModal() {
+        modal.classList.add('opacity-0');
+        modalContent.classList.remove('scale-100');
+        modalContent.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+                stream = null;
+            }
+            video.classList.add('hidden');
+            cameraLoading.classList.remove('hidden');
+            startCameraBtn.classList.remove('hidden');
+            scanBtn.classList.add('hidden');
+            scanBtn.disabled = false;
+            scanBtn.textContent = 'Capture & Save';
+            scannerLine.classList.remove('scanning-line');
+            scannerLine.classList.add('hidden');
+        }, 300);
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    
+    startCameraBtn.addEventListener('click', async () => {
+        startCameraBtn.textContent = 'Starting Camera...';
+        startCameraBtn.disabled    = true;
+        try {
+            await loadModels();
+        } catch (e) {
+            startCameraBtn.disabled = false;
+            startCameraBtn.textContent = 'Start Camera';
+            return;
+        }
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.classList.remove('hidden');
+            cameraLoading.classList.add('hidden');
+            startCameraBtn.classList.add('hidden');
+            scanBtn.classList.remove('hidden');
+            statusText.textContent = 'Click capture when ready.';
+        } catch (err) {
+            startCameraBtn.disabled    = false;
+            startCameraBtn.textContent = 'Start Camera';
+        }
+    });
+
+    scanBtn.addEventListener('click', async () => {
+        scanBtn.disabled  = true;
+        scanBtn.textContent = 'Processing...';
+        statusText.textContent = 'Hold still...';
+        scannerLine.classList.remove('hidden');
+        scannerLine.classList.add('scanning-line');
+
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+        
+        if (!detection) {
+            scanBtn.disabled    = false;
+            scanBtn.textContent = 'Capture & Save';
+            scannerLine.classList.remove('scanning-line');
+            scannerLine.classList.add('hidden');
+            statusText.textContent = '❌ No face detected. Try again.';
+            return;
+        }
+        
+        const descriptorArray = Array.from(detection.descriptor);
+        document.getElementById('face_descriptor_input').value = JSON.stringify(descriptorArray);
+        
+        document.getElementById('face-setup-status').textContent = '✅ FaceID Captured Successfully';
+        document.getElementById('face-setup-status').className = 'text-xs text-center mt-2 text-green-600 font-bold';
+        
+        closeModal();
+    });
+</script>
 {% endblock %}

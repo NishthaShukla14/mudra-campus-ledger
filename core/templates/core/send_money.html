@@ -36,12 +36,17 @@
       ================================================================ -->
       <div id="section-direct" class="block animate-fade-in">
         
+        <!-- Current Balance Display -->
+        <div class="text-center mb-6">
+          <p class="text-sm font-semibold text-slate-500">Available Balance: <span id="current-balance" class="text-indigo-600 font-bold">₹{{ user.wallet_balance|default:"0.00" }}</span></p>
+        </div>
+
         <!-- Big Amount Input -->
         <div class="text-center mb-8">
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Enter Amount</p>
           <div class="flex items-center justify-center">
             <span class="text-3xl font-bold text-slate-400 mr-1">₹</span>
-            <input type="number" placeholder="0" class="w-full text-5xl font-extrabold text-slate-800 bg-transparent border-none focus:ring-0 text-center p-0 placeholder-slate-300 outline-none" style="max-width: 200px;">
+            <input type="number" id="transfer-amount" placeholder="0" class="w-full text-5xl font-extrabold text-slate-800 bg-transparent border-none focus:ring-0 text-center p-0 placeholder-slate-300 outline-none" style="max-width: 200px;">
           </div>
         </div>
 
@@ -55,8 +60,9 @@
                 </svg>
               </div>
             </div>
-            <input type="text" placeholder="Recipient Student ID (e.g. CS2024-102)" class="w-full pl-14 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all outline-none text-slate-700 placeholder-slate-400">
+            <input type="text" id="recipient-roll" placeholder="Recipient Student ID (e.g. 240122...)" class="w-full pl-14 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all outline-none text-slate-700 placeholder-slate-400">
           </div>
+          <div id="recipient-name" class="text-sm text-emerald-600 px-2 font-semibold hidden"></div>
 
           <!-- Note -->
           <div class="relative">
@@ -67,7 +73,7 @@
                 </svg>
               </div>
             </div>
-            <input type="text" placeholder="What's this for? (Optional)" class="w-full pl-14 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all outline-none text-slate-700 placeholder-slate-400">
+            <input type="text" id="transfer-note" placeholder="What's this for? (Optional)" class="w-full pl-14 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all outline-none text-slate-700 placeholder-slate-400">
           </div>
         </div>
       </div>
@@ -82,59 +88,26 @@
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Total Bill Amount</p>
           <div class="flex items-center justify-center bg-slate-50 border border-slate-200 rounded-2xl py-3 mx-8 focus-within:border-indigo-500 focus-within:bg-white transition-colors">
             <span class="text-xl font-bold text-slate-400 ml-4 mr-1">₹</span>
-            <input type="number" placeholder="450" class="w-full text-2xl font-bold text-slate-800 bg-transparent border-none focus:ring-0 text-left p-0 placeholder-slate-300 outline-none">
+            <input type="number" id="split-amount" placeholder="450" class="w-full text-2xl font-bold text-slate-800 bg-transparent border-none focus:ring-0 text-left p-0 placeholder-slate-300 outline-none">
           </div>
         </div>
 
         <div>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-bold text-slate-700">Split with Roommates</h3>
-            <button class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 border border-indigo-100">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Add
-            </button>
+          <div class="mb-4">
+            <h3 class="text-sm font-bold text-slate-700 mb-2">Split with Friends</h3>
+            <div class="flex items-center gap-2">
+              <input type="text" id="split-roll-input" placeholder="Friend's Student ID" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm">
+              <button id="add-friend-btn" class="bg-orange-100 text-orange-700 hover:bg-orange-200 px-4 py-2 rounded-lg font-bold text-sm transition">Add</button>
+            </div>
+            <div id="split-friend-error" class="text-xs text-rose-500 mt-1 hidden"></div>
           </div>
           
-          <div class="space-y-3 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-            <!-- Friend 1 -->
-            <label class="flex items-center justify-between p-3 border border-slate-100 rounded-2xl hover:bg-slate-50 cursor-pointer transition-colors has-[:checked]:bg-indigo-50/40 has-[:checked]:border-indigo-200 group">
-              <div class="flex items-center gap-3">
-                <input type="checkbox" checked class="checkbox checkbox-sm checkbox-primary border-slate-300 rounded-md" />
-                <div class="avatar placeholder">
-                  <div class="bg-indigo-100 text-indigo-600 w-9 rounded-full">
-                    <span class="text-xs font-bold">AK</span>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-sm font-semibold text-slate-800">Aarav Kumar</p>
-                  <p class="text-xs text-slate-500">CS2024-045</p>
-                </div>
-              </div>
-              <div class="text-sm font-bold text-slate-700">₹150</div>
-            </label>
-
-            <!-- Friend 2 -->
-            <label class="flex items-center justify-between p-3 border border-slate-100 rounded-2xl hover:bg-slate-50 cursor-pointer transition-colors has-[:checked]:bg-indigo-50/40 has-[:checked]:border-indigo-200 group">
-              <div class="flex items-center gap-3">
-                <input type="checkbox" checked class="checkbox checkbox-sm checkbox-primary border-slate-300 rounded-md" />
-                <div class="avatar placeholder">
-                  <div class="bg-emerald-100 text-emerald-600 w-9 rounded-full">
-                    <span class="text-xs font-bold">SM</span>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-sm font-semibold text-slate-800">Siddharth Menon</p>
-                  <p class="text-xs text-slate-500">CS2024-089</p>
-                </div>
-              </div>
-              <div class="text-sm font-bold text-slate-700">₹150</div>
-            </label>
-
+          <div id="split-friends-list" class="space-y-3 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
             <!-- You -->
             <div class="flex items-center justify-between p-3 border border-slate-100 rounded-2xl bg-slate-50">
               <div class="flex items-center gap-3 pl-8">
                 <div class="avatar placeholder">
-                  <div class="bg-slate-200 text-slate-600 w-9 rounded-full">
+                  <div class="bg-slate-200 text-slate-600 w-9 rounded-full flex justify-center items-center">
                     <span class="text-xs font-bold">You</span>
                   </div>
                 </div>
@@ -142,21 +115,21 @@
                   <p class="text-sm font-semibold text-slate-800">Your Share</p>
                 </div>
               </div>
-              <div class="text-sm font-bold text-slate-700">₹150</div>
+              <div class="text-sm font-bold text-slate-700" id="your-share">₹0</div>
             </div>
           </div>
           
-          <div class="mt-4 bg-orange-50/80 border border-orange-100 text-orange-700 p-3 rounded-xl text-xs font-medium flex gap-2 items-start">
+                    <div class="mt-4 bg-orange-50/80 border border-orange-100 text-orange-700 p-3 rounded-xl text-xs font-medium flex gap-2 items-start">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p>Splitting ₹450 equally among 3 people. A request will be sent to their MUDRA accounts.</p>
+            <p><span id="split-summary-msg">Splitting ₹0 equally among 1 people. A request will be sent to their MUDRA accounts.</span></p>
           </div>
         </div>
       </div>
 
       <!-- ── Common Proceed Button ──────────────────────────────────────── -->
-      <button class="w-full mt-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group border-0">
+      <button id="btn-proceed" class="w-full mt-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group border-0">
         Proceed securely
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -231,5 +204,221 @@
       secDirect.classList.add('hidden');
     }
   }
+
+  // Real-time beneficiary lookup
+  document.getElementById('recipient-roll').addEventListener('input', function(e) {
+      const roll = e.target.value.trim();
+      const nameDiv = document.getElementById('recipient-name');
+      
+      if (roll.length === 13) {
+          fetch(`/api/verify-roll/?roll_number=${roll}`)
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      nameDiv.textContent = `✓ Associated User: ${data.name}`;
+                      nameDiv.className = 'text-sm text-emerald-600 px-2 font-semibold mt-1 block animate-fade-in';
+                  } else {
+                      nameDiv.textContent = '✗ ' + data.message;
+                      nameDiv.className = 'text-sm text-rose-600 px-2 font-semibold mt-1 block animate-fade-in';
+                  }
+              })
+              .catch(err => console.error('Error fetching user:', err));
+      } else {
+          nameDiv.className = 'hidden';
+      }
+  });
+
+  // Split Bill Logic
+  let splitFriends = [];
+  
+  function updateSplit() {
+      const totalAmount = parseFloat(document.getElementById('split-amount').value) || 0;
+      const totalPeople = splitFriends.length + 1;
+      const perPerson = (totalAmount / totalPeople).toFixed(2);
+      
+      document.getElementById('your-share').textContent = '₹' + perPerson;
+      document.getElementById('split-summary-msg').textContent = `Splitting ₹${totalAmount} equally among ${totalPeople} people. A request will be sent to their MUDRA accounts.`;
+      
+      splitFriends.forEach(f => {
+          document.getElementById('share-' + f.roll).textContent = '₹' + perPerson;
+      });
+  }
+  
+  document.getElementById('split-amount').addEventListener('input', updateSplit);
+  
+  document.getElementById('add-friend-btn').addEventListener('click', function() {
+      const rollInput = document.getElementById('split-roll-input');
+      const roll = rollInput.value.trim();
+      const errorDiv = document.getElementById('split-friend-error');
+      
+      if (roll.length !== 13) {
+          errorDiv.textContent = 'Invalid Roll Number (must be 13 digits)';
+          errorDiv.classList.remove('hidden');
+          return;
+      }
+      if (splitFriends.find(f => f.roll === roll)) {
+          errorDiv.textContent = 'Friend already added!';
+          errorDiv.classList.remove('hidden');
+          return;
+      }
+      
+      const originalText = this.textContent;
+      this.textContent = '...';
+      this.disabled = true;
+      
+      fetch(`/api/verify-roll/?roll_number=${roll}`)
+          .then(res => res.json())
+          .then(data => {
+              this.textContent = originalText;
+              this.disabled = false;
+              if (data.success) {
+                  errorDiv.classList.add('hidden');
+                  splitFriends.push({ roll: roll, name: data.name });
+                  
+                  const friendDiv = document.createElement('div');
+                  friendDiv.className = 'flex items-center justify-between p-3 border border-slate-100 rounded-2xl bg-white';
+                  friendDiv.innerHTML = `
+                    <div class="flex items-center gap-3 pl-8">
+                      <div class="avatar placeholder">
+                        <div class="bg-indigo-100 text-indigo-600 w-9 rounded-full flex justify-center items-center">
+                          <span class="text-xs font-bold">${data.name.charAt(0)}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p class="text-sm font-semibold text-slate-800">${data.name}</p>
+                        <p class="text-xs text-slate-500">${roll}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-sm font-bold text-slate-700" id="share-${roll}">₹0</div>
+                        <button class="text-rose-500 hover:text-rose-700" onclick="removeFriend('${roll}', this)"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button>
+                    </div>`;
+                  document.getElementById('split-friends-list').appendChild(friendDiv);
+                  rollInput.value = '';
+                  updateSplit();
+              } else {
+                  errorDiv.textContent = data.message;
+                  errorDiv.classList.remove('hidden');
+              }
+          });
+  });
+  
+  function removeFriend(roll, btn) {
+      splitFriends = splitFriends.filter(f => f.roll !== roll);
+      btn.closest('.p-3').remove();
+      updateSplit();
+  }
+
+  // Handle Proceed button
+  document.getElementById('btn-proceed').addEventListener('click', function() {
+      const isDirect = document.getElementById('section-direct').classList.contains('block');
+      if (isDirect) {
+          const amount = document.getElementById('transfer-amount').value;
+          const roll = document.getElementById('recipient-roll').value;
+          const note = document.getElementById('transfer-note').value;
+          
+          if (!amount || !roll) {
+              alert('Please enter amount and recipient roll number.');
+              return;
+          }
+
+          const btn = this;
+          const originalText = btn.innerHTML;
+          btn.innerHTML = 'Processing...';
+          btn.disabled = true;
+
+          fetch('/api/send-money/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': '{{ csrf_token }}'
+              },
+              body: JSON.stringify({
+                  roll_number: roll,
+                  amount: amount,
+                  note: note,
+                  category: 'Transfer'
+              })
+          })
+          .then(res => res.json())
+          .then(data => {
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              
+              if (data.success) {
+                  // Show success toast (using the function from base.html if we want, or simple alert)
+                  alert('Success: ' + data.message);
+                  // Update balance
+                  document.getElementById('current-balance').textContent = '₹' + parseFloat(data.new_balance).toFixed(2);
+                  // Reset form
+                  document.getElementById('transfer-amount').value = '';
+                  document.getElementById('recipient-roll').value = '';
+                  document.getElementById('transfer-note').value = '';
+                  document.getElementById('recipient-name').className = 'hidden';
+              } else {
+                  alert('Error: ' + data.message);
+              }
+          })
+          .catch(err => {
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              alert('An error occurred while transferring money.');
+          });
+      } else {
+          // Split Bill submission
+          const totalAmount = parseFloat(document.getElementById('split-amount').value);
+          if (!totalAmount || splitFriends.length === 0) {
+              alert('Please enter amount and add at least one friend.');
+              return;
+          }
+          
+          const btn = this;
+          const originalText = btn.innerHTML;
+          btn.innerHTML = 'Sending Requests...';
+          btn.disabled = true;
+          
+          fetch('/api/bill-split/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+              body: JSON.stringify({
+                  total_amount: totalAmount,
+                  friends: splitFriends.map(f => f.roll),
+                  category: 'General',
+                  note: 'Bill Split'
+              })
+          })
+          .then(res => res.json())
+          .then(data => {
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              if(data.success) {
+                  alert('Success: ' + data.message);
+                  document.getElementById('split-amount').value = '';
+                  splitFriends = [];
+                  document.getElementById('split-friends-list').innerHTML = `
+                    <div class="flex items-center justify-between p-3 border border-slate-100 rounded-2xl bg-slate-50">
+                      <div class="flex items-center gap-3 pl-8">
+                        <div class="avatar placeholder">
+                          <div class="bg-slate-200 text-slate-600 w-9 rounded-full flex justify-center items-center">
+                            <span class="text-xs font-bold">You</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-slate-800">Your Share</p>
+                        </div>
+                      </div>
+                      <div class="text-sm font-bold text-slate-700" id="your-share">₹0</div>
+                    </div>`;
+                  updateSplit();
+              } else {
+                  alert('Error: ' + data.message);
+              }
+          }).catch(err => {
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              alert('Error sending requests.');
+          });
+      }
+  });
 </script>
 {% endblock %}

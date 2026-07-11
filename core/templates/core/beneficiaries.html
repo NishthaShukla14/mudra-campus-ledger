@@ -1,137 +1,31 @@
 {% extends 'core/base.html' %}
-
 {% block content %}
-<div class="min-h-screen bg-[#f8fafc] py-10 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
-  
-  <!-- ── Header & Controls ──────────────────────────────────────────────── -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
-    <div>
-      <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Beneficiaries</h1>
-      <p class="mt-1 text-sm text-slate-500">Manage your saved payees for quick and easy campus transfers.</p>
-    </div>
-    
-    <!-- Add New Payee Button -->
-    <button class="btn border-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 transition-all active:scale-95 w-full sm:w-auto flex items-center gap-2 rounded-xl group">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-      Add New Payee
-    </button>
-  </div>
-
-  <!-- ── Beneficiaries Grid ─────────────────────────────────────────────── -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    
-    <!-- Payee Card 1 -->
-    <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-      <!-- Top Section -->
-      <div class="flex items-center gap-4 mb-5">
-        <div class="avatar relative shrink-0">
-          <div class="w-16 h-16 rounded-full ring ring-indigo-50 ring-offset-2 overflow-hidden shadow-sm">
-            <!-- Using ui-avatars API for sleek letter avatars -->
-            <img src="https://ui-avatars.com/api/?name=Yash+Pratap+Singh&background=4f46e5&color=fff&size=128&font-size=0.35&bold=true" alt="Avatar" />
-          </div>
-          <!-- Online status dot -->
-          <div class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">Yash Pratap Singh</h3>
-          <p class="text-[13px] font-semibold text-slate-400 font-mono tracking-wider mt-0.5 truncate">SRMCEM-IT-045</p>
-        </div>
-      </div>
-      
-      <!-- Divider -->
-      <hr class="border-slate-50 mb-5">
-      
-      <!-- Actions -->
-      <div class="mt-auto grid grid-cols-2 gap-3">
-        <button class="btn btn-sm h-10 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-0 rounded-xl transition-colors font-bold shadow-none flex gap-1.5 items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          Pay Now
-        </button>
-        <button class="btn btn-sm h-10 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-colors font-semibold shadow-none flex gap-1.5 items-center justify-center">
-          Details
-        </button>
-      </div>
+<div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-slate-800">My Beneficiaries</h1>
+        <p class="text-slate-500 mt-2">People you have previously sent money to.</p>
     </div>
 
-    <!-- Payee Card 2 -->
-    <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-      <div class="flex items-center gap-4 mb-5">
-        <div class="avatar relative shrink-0">
-          <div class="w-16 h-16 rounded-full ring ring-emerald-50 ring-offset-2 overflow-hidden shadow-sm">
-            <img src="https://ui-avatars.com/api/?name=Sneha+Reddy&background=10b981&color=fff&size=128&font-size=0.35&bold=true" alt="Avatar" />
-          </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for ben in beneficiaries %}
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center hover:shadow-md transition-shadow">
+            <div class="w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 flex justify-center items-center text-2xl font-bold mb-4">
+                {{ ben.name|slice:":1"|upper }}
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">{{ ben.name }}</h3>
+            <p class="text-sm text-slate-500 mb-4">{{ ben.roll_number }}</p>
+            <a href="{% url 'send_money_page' %}?roll={{ ben.roll_number }}" class="btn btn-sm btn-outline btn-primary rounded-full w-full">Send Money</a>
         </div>
-        <div class="min-w-0">
-          <h3 class="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors truncate">Sneha Reddy</h3>
-          <p class="text-[13px] font-semibold text-slate-400 font-mono tracking-wider mt-0.5 truncate">SRMCEM-CS-112</p>
+        {% empty %}
+        <div class="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-12 bg-white rounded-2xl border border-slate-100">
+            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300 mb-4">
+                <i class="fa-solid fa-users text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-600">No beneficiaries yet</h3>
+            <p class="text-sm text-slate-400 mt-1 mb-4">Make a transfer to see them here.</p>
+            <a href="{% url 'send_money_page' %}" class="btn btn-primary btn-sm rounded-full">Transfer Now</a>
         </div>
-      </div>
-      <hr class="border-slate-50 mb-5">
-      <div class="mt-auto grid grid-cols-2 gap-3">
-        <button class="btn btn-sm h-10 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-0 rounded-xl transition-colors font-bold shadow-none flex gap-1.5 items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          Pay Now
-        </button>
-        <button class="btn btn-sm h-10 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-colors font-semibold shadow-none flex gap-1.5 items-center justify-center">
-          Details
-        </button>
-      </div>
+        {% endfor %}
     </div>
-
-    <!-- Payee Card 3 -->
-    <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-      <div class="flex items-center gap-4 mb-5">
-        <div class="avatar relative shrink-0">
-          <div class="w-16 h-16 rounded-full ring ring-amber-50 ring-offset-2 overflow-hidden shadow-sm">
-            <img src="https://ui-avatars.com/api/?name=Rohan+Mehta&background=f59e0b&color=fff&size=128&font-size=0.35&bold=true" alt="Avatar" />
-          </div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-lg font-bold text-slate-900 group-hover:text-amber-600 transition-colors truncate">Rohan Mehta</h3>
-          <p class="text-[13px] font-semibold text-slate-400 font-mono tracking-wider mt-0.5 truncate">SRMCEM-EC-089</p>
-        </div>
-      </div>
-      <hr class="border-slate-50 mb-5">
-      <div class="mt-auto grid grid-cols-2 gap-3">
-        <button class="btn btn-sm h-10 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-0 rounded-xl transition-colors font-bold shadow-none flex gap-1.5 items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          Pay Now
-        </button>
-        <button class="btn btn-sm h-10 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-colors font-semibold shadow-none flex gap-1.5 items-center justify-center">
-          Details
-        </button>
-      </div>
-    </div>
-
-    <!-- Payee Card 4 -->
-    <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-      <div class="flex items-center gap-4 mb-5">
-        <div class="avatar relative shrink-0">
-          <div class="w-16 h-16 rounded-full ring ring-rose-50 ring-offset-2 overflow-hidden shadow-sm">
-            <img src="https://ui-avatars.com/api/?name=Ananya+Gupta&background=f43f5e&color=fff&size=128&font-size=0.35&bold=true" alt="Avatar" />
-          </div>
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-lg font-bold text-slate-900 group-hover:text-rose-600 transition-colors truncate">Ananya Gupta</h3>
-          <p class="text-[13px] font-semibold text-slate-400 font-mono tracking-wider mt-0.5 truncate">SRMCEM-ME-023</p>
-        </div>
-      </div>
-      <hr class="border-slate-50 mb-5">
-      <div class="mt-auto grid grid-cols-2 gap-3">
-        <button class="btn btn-sm h-10 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-0 rounded-xl transition-colors font-bold shadow-none flex gap-1.5 items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          Pay Now
-        </button>
-        <button class="btn btn-sm h-10 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-colors font-semibold shadow-none flex gap-1.5 items-center justify-center">
-          Details
-        </button>
-      </div>
-    </div>
-
-  </div>
-
 </div>
 {% endblock %}

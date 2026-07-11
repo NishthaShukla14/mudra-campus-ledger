@@ -68,40 +68,67 @@
                 <span class="tracking-widest">M U D <span class="text-primary font-black">₹</span> A</span>
             </a>
         </div>
+        
+        <!-- Mobile Menu (DaisyUI Dropdown) -->
+        <div class="flex-none lg:hidden">
+            <div class="dropdown dropdown-end">
+              <div tabindex="0" role="button" class="btn btn-ghost">
+                <i class="fa-solid fa-bars text-xl text-slate-800"></i>
+              </div>
+              <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-xl bg-white rounded-box w-52 border border-slate-100">
+                <li><a href="{% url 'home' %}" class="font-medium">Home</a></li>
+                {% if user.is_authenticated %}
+                <li class="menu-title mt-2 font-bold text-slate-400">My Accounts</li>
+                <li><a href="{% url 'balances' %}"><i class="fa-solid fa-wallet w-4"></i> Balances</a></li>
+                <li><a href="{% url 'statements' %}"><i class="fa-solid fa-file-invoice w-4"></i> Statements</a></li>
+                <li class="menu-title mt-2 font-bold text-slate-400">Fund Transfer</li>
+                <li><a href="{% url 'send_money_page' %}"><i class="fa-solid fa-paper-plane w-4"></i> Send Money</a></li>
+                <li><a href="{% url 'beneficiaries' %}"><i class="fa-solid fa-users w-4"></i> Beneficiaries</a></li>
+                <li class="menu-title mt-2 font-bold text-slate-400">e-Services</li>
+                <li><a href="{% url 'fee_payment' %}"><i class="fa-solid fa-graduation-cap w-4"></i> Fee Payment</a></li>
+                <li><a href="{% url 'virtual_card' %}"><i class="fa-solid fa-credit-card w-4"></i> Virtual Card</a></li>
+                <li><a href="{% url 'helpdesk' %}"><i class="fa-solid fa-headset w-4"></i> Helpdesk</a></li>
+                {% endif %}
+              </ul>
+            </div>
+        </div>
+
         <div class="flex-none hidden lg:flex">
             <ul class="menu menu-horizontal px-1 font-medium text-slate-600 text-sm">
-                <li><a href="{% url 'home' %}" class="hover:text-primary hover:bg-indigo-50 rounded-lg">Home</a></li>
+                <li><a href="{% url 'home' %}" class="hover:text-primary hover:bg-indigo-50 rounded-lg transition-colors">Home</a></li>
                 
+                {% if user.is_authenticated %}
                 <li class="dropdown dropdown-hover">
-                    <div tabindex="0" role="button" class="hover:text-primary hover:bg-indigo-50 rounded-lg">
+                    <div tabindex="0" role="button" class="hover:text-primary hover:bg-indigo-50 rounded-lg transition-colors">
                         My Accounts <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </div>
-                    <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4">
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4 transition-all duration-200">
                         <li><a href="{% url 'balances' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-wallet text-slate-400 w-5"></i> Balances</a></li>
                         <li><a href="{% url 'statements' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-file-invoice text-slate-400 w-5"></i> Statements</a></li>
                     </ul>
                 </li>
                 
                 <li class="dropdown dropdown-hover">
-                    <div tabindex="0" role="button" class="hover:text-primary hover:bg-indigo-50 rounded-lg">
+                    <div tabindex="0" role="button" class="hover:text-primary hover:bg-indigo-50 rounded-lg transition-colors">
                         Fund Transfer <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </div>
-                    <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4">
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4 transition-all duration-200">
                         <li><a href="{% url 'send_money_page' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-paper-plane text-slate-400 w-5"></i> Send Money</a></li>
                         <li><a href="{% url 'beneficiaries' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-users text-slate-400 w-5"></i> Beneficiaries</a></li>
                     </ul>
                 </li>
                 
                 <li class="dropdown dropdown-hover">
-                    <div tabindex="0" role="button" class="hover:text-primary hover:bg-indigo-50 rounded-lg">
+                    <div tabindex="0" role="button" class="hover:text-primary hover:bg-indigo-50 rounded-lg transition-colors">
                         e-Services <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </div>
-                    <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4">
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-xl bg-white rounded-xl w-56 border border-slate-100 gap-1 mt-4 transition-all duration-200">
                         <li><a href="{% url 'fee_payment' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-graduation-cap text-slate-400 w-5"></i> Fee Payment</a></li>
                         <li><a href="{% url 'virtual_card' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-credit-card text-slate-400 w-5"></i> Virtual Card</a></li>
                         <li><a href="{% url 'helpdesk' %}" class="hover:bg-slate-50 rounded-md py-2"><i class="fa-solid fa-headset text-slate-400 w-5"></i> Helpdesk</a></li>
                     </ul>
                 </li>
+                {% endif %}
             </ul>
         </div>
         
@@ -135,25 +162,24 @@
 
    <footer class="footer p-10 bg-slate-900 text-slate-300 mt-auto border-t border-slate-800">
         <aside>
-            <div class="flex items-center gap-2 text-3xl font-extrabold tracking-tight mb-2 text-white">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 text-3xl font-extrabold tracking-tight mb-2 text-white hover:text-indigo-400 transition-colors">
                 <i class="fa-solid fa-building-columns text-primary"></i>
                 <span class="tracking-widest">M U D <span class="text-primary font-black">₹</span> A</span>
-            </div>
+            </a>
             <p class="text-slate-400 mt-2 max-w-xs">Premium Campus Banking tailored for tomorrow's engineers. Secure, instant, and reliable.</p>
         </aside> 
         <nav>
-            <h6 class="footer-title text-slate-100 opacity-100 font-bold">SERVICES</h6> 
+            <a href="{% url 'dashboard' %}" class="footer-title text-slate-100 opacity-100 font-bold hover:text-indigo-400 transition-colors cursor-pointer">SERVICES</a> 
             <a href="{% url 'transfer_money' %}" class="link link-hover text-slate-400">Fund Transfers</a>
             <a href="{% url 'dashboard' %}" class="link link-hover text-slate-400">Campus Cards</a>
             <a href="{% url 'fee_payment' %}" class="link link-hover text-slate-400">Fee Payment</a>
         </nav> 
         <nav>
-            <h6 class="footer-title text-slate-100 opacity-100 font-bold">LEGAL</h6> 
-            <a onclick="showDevToast('Terms of Use')" class="link link-hover text-slate-400 cursor-pointer">Terms of Use</a>
-            <a onclick="showDevToast('Privacy Policy')" class="link link-hover text-slate-400 cursor-pointer">Privacy Policy</a>
-            <a onclick="showDevToast('Security Info')" class="link link-hover text-slate-400 cursor-pointer">Security Information</a>
+            <a href="{% url 'terms' %}" class="footer-title text-slate-100 opacity-100 font-bold hover:text-indigo-400 transition-colors cursor-pointer">LEGAL</a> 
+            <a href="{% url 'terms' %}" class="link link-hover text-slate-400">Terms of Use</a>
+            <a href="{% url 'privacy' %}" class="link link-hover text-slate-400">Privacy Policy</a>
+            <a href="{% url 'security' %}" class="link link-hover text-slate-400">Security Information</a>
         </nav>
-    </footer>
     </footer>
     <footer class="footer footer-center p-6 bg-slate-950 text-slate-500 text-sm">
         <aside>

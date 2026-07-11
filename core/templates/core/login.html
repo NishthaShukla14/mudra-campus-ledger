@@ -132,10 +132,9 @@
     </div>
 
 
+    <!-- Face API (vladmandic fork is maintained and works well) -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
     <script>
-    // ─────────────────────────────────────────────────────────
-    // CSRF token helper
-    // ─────────────────────────────────────────────────────────
     function getCsrf() {
         const name  = 'csrftoken';
         const parts = document.cookie.split(';');
@@ -156,9 +155,6 @@
         el.classList.remove('hidden');
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Modal open / close
-    // ─────────────────────────────────────────────────────────
     const openBtn      = document.getElementById('openFaceId');
     const closeBtn     = document.getElementById('closeFaceId');
     const modal        = document.getElementById('faceIdModal');
@@ -170,6 +166,20 @@
     const statusText   = document.getElementById('statusText');
     const scannerLine  = document.getElementById('scannerLine');
     let stream         = null;
+    let modelsLoaded   = false;
+
+    async function loadModels() {
+        if (modelsLoaded) return;
+        statusText.textContent = "Loading Face AI models...";
+        const modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl),
+            faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl),
+            faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl)
+        ]);
+        modelsLoaded = true;
+        statusText.textContent = "Please look directly at the camera.";
+    }
 
     function openModal() {
         modal.classList.remove('hidden');
@@ -186,12 +196,10 @@
         modalContent.classList.add('scale-95');
         setTimeout(() => {
             modal.classList.add('hidden');
-            // Stop camera
             if (stream) {
                 stream.getTracks().forEach(t => t.stop());
                 stream = null;
             }
-            // Reset UI
             video.classList.add('hidden');
             cameraLoading.classList.remove('hidden');
             cameraLoading.textContent = 'Enter roll number & click "Start Camera"';
@@ -211,9 +219,6 @@
     closeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-    // ─────────────────────────────────────────────────────────
-    // Step 1: Start camera
-    // ─────────────────────────────────────────────────────────
     startCameraBtn.addEventListener('click', async () => {
         const roll = document.getElementById('faceRollNumber').value.trim();
         if (!roll) {
@@ -221,8 +226,17 @@
             return;
         }
 
-        startCameraBtn.textContent = 'Starting...';
+        startCameraBtn.textContent = 'Starting Camera...';
         startCameraBtn.disabled    = true;
+        
+        try {
+            await loadModels();
+        } catch (e) {
+            showFaceToast('Failed to load Face AI models.', false);
+            startCameraBtn.disabled = false;
+            startCameraBtn.textContent = 'Start Camera';
+            return;
+        }
 
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -233,23 +247,12 @@
             scanBtn.classList.remove('hidden');
             statusText.textContent = 'Camera active. Click below to authenticate.';
         } catch (err) {
-            showFaceToast(
-                'Camera access denied. Access via http://localhost:8000 for camera features.',
-                false
-            );
+            showFaceToast('Camera access denied.', false);
             startCameraBtn.disabled    = false;
             startCameraBtn.textContent = 'Start Camera';
         }
     });
 
-    // ─────────────────────────────────────────────────────────
-    // Step 2: Scan & authenticate via AJAX
-    //
-    // Sends the user's roll number to /api/face-login/.
-    // The backend validates the account is active, stores/compares
-    // a mock biometric hash, calls auth_login(), then returns
-    // { success: true, redirect: '/dashboard/' }.
-    // ─────────────────────────────────────────────────────────
     scanBtn.addEventListener('click', async () => {
         const roll = document.getElementById('faceRollNumber').value.trim();
         if (!roll) {
@@ -258,13 +261,28 @@
         }
 
         scanBtn.disabled  = true;
-        scanBtn.textContent = 'Verifying...';
-        statusText.textContent = 'Verifying biometrics...';
+        scanBtn.textContent = 'Detecting Face...';
+        statusText.textContent = 'Hold still... extracting features...';
         statusText.classList.add('animate-pulse');
-
-        // Animate scanning laser
         scannerLine.classList.remove('hidden');
         scannerLine.classList.add('scanning-line');
+
+        // Extract face features
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+        
+        if (!detection) {
+            showFaceToast('❌ No face detected. Please try again.', false);
+            scanBtn.disabled    = false;
+            scanBtn.textContent = 'Scan & Authenticate';
+            statusText.classList.remove('animate-pulse');
+            scannerLine.classList.remove('scanning-line');
+            scannerLine.classList.add('hidden');
+            statusText.textContent = 'Please look directly at the camera.';
+            return;
+        }
+        
+        statusText.textContent = 'Verifying with server...';
+        const descriptorArray = Array.from(detection.descriptor);
 
         try {
             const res  = await fetch('{% url "face_login_verify" %}', {
@@ -273,7 +291,10 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken':  getCsrf(),
                 },
-                body: JSON.stringify({ roll_number: roll }),
+                body: JSON.stringify({ 
+                    roll_number: roll,
+                    descriptor: descriptorArray 
+                }),
             });
             const data = await res.json();
 
@@ -298,6 +319,9 @@
             showFaceToast('❌ Network error. Please try again.', false);
             scanBtn.disabled    = false;
             scanBtn.textContent = 'Scan & Authenticate';
+            statusText.classList.remove('animate-pulse');
+            scannerLine.classList.remove('scanning-line');
+            scannerLine.classList.add('hidden');
         }
     });
     </script>

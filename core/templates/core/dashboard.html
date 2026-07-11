@@ -23,7 +23,7 @@
                         M U D <span class="text-orange-400 text-sm font-black">₹</span> A ELITE
                     </h3>
                     <!-- Live balance — updated by AJAX on successful transfer -->
-                    <div class="text-3xl font-bold font-mono" id="liveBalance">₹{{ user.balance|default:"0.00" }}</div>
+                    <div class="text-3xl font-bold font-mono" id="liveBalance">₹{{ user.wallet_balance|default:"0.00" }}</div>
                 </div>
                 <div class="flex">
                     <div class="w-10 h-10 rounded-full bg-red-500 mix-blend-multiply opacity-90"></div>
@@ -33,7 +33,7 @@
             
             <div class="relative z-10 space-y-5">
                 <div class="font-mono text-2xl tracking-[0.15em] drop-shadow-md">
-                    4532  1245  7890  3021
+                    {{ request.user.card_number }}
                 </div>
                 
                 <div class="flex justify-between items-end">
@@ -248,6 +248,40 @@
 
     </div>
 
+
+        <!-- Pending Payment Requests -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-8">
+            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Pending Payment Requests
+            </h3>
+            <div id="paymentRequestList" class="space-y-3">
+                {% for req in pending_requests %}
+                <div class="bg-orange-50 border border-orange-100 px-4 py-3 rounded-xl flex items-start justify-between gap-2" id="payReq-{{ req.id }}">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-slate-700 text-sm truncate">{{ req.requester.name }} ({{ req.requester.roll_number }})</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Requested ₹{{ req.amount }} — {{ req.note }}</p>
+                        <p class="text-xs text-slate-400">{{ req.created_at|date:"M d, H:i" }}</p>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick="respondPayment({{ req.id }}, 'approve')"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                            Pay
+                        </button>
+                        <button onclick="respondPayment({{ req.id }}, 'decline')"
+                                class="bg-slate-300 hover:bg-slate-400 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                            Decline
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-6 text-slate-400 text-sm" id="noPaymentReqsMsg">
+                    No pending requests at the moment.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
     <!-- ──────────────────────── Recent Transactions Table ── -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 class="text-lg font-bold text-slate-800 mb-4">Recent Transactions</h3>
@@ -422,7 +456,7 @@ const trendData     = {{ trend_data|safe|default:"[]" }};
 
 const expenseCtx = document.getElementById('expenseChart');
 if (expenseCtx) {
-    new Chart(expenseCtx.getContext('2d'), {
+    window.expenseChartObj = new Chart(expenseCtx.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: expenseLabels.length > 0 ? expenseLabels : ['No Data'],
@@ -439,13 +473,13 @@ if (expenseCtx) {
 
 const trendCtx = document.getElementById('trendChart');
 if (trendCtx) {
-    new Chart(trendCtx.getContext('2d'), {
+    window.trendChartObj = new Chart(trendCtx.getContext('2d'), {
         type: 'line',
         data: {
             labels: trendLabels.length > 0 ? trendLabels : ['Now'],
             datasets: [{
                 label: 'Balance (₹)',
-                data: trendData.length > 0 ? trendData : [{{ user.balance|default:"0" }}],
+                data: trendData.length > 0 ? trendData : [{{ user.wallet_balance|default:"0" }}],
                 borderColor: '#4f46e5',
                 backgroundColor: 'rgba(79, 70, 229, 0.1)',
                 borderWidth: 3,
@@ -500,6 +534,52 @@ if (sendMoneyBtn) {
                 // Clear inputs
                 document.getElementById('recipientInput').value = '';
                 document.getElementById('sendAmount').value     = '';
+
+                // Update charts dynamically
+                if (window.expenseChartObj && data.category) {
+                    let catIndex = window.expenseChartObj.data.labels.indexOf(data.category);
+                    if (catIndex >= 0) {
+                        window.expenseChartObj.data.datasets[0].data[catIndex] += data.amount;
+                    } else {
+                        window.expenseChartObj.data.labels.push(data.category);
+                        window.expenseChartObj.data.datasets[0].data.push(data.amount);
+                        window.expenseChartObj.data.datasets[0].backgroundColor.push('#f59e0b');
+                    }
+                    window.expenseChartObj.update();
+                }
+
+                if (window.trendChartObj) {
+                    window.trendChartObj.data.labels.push('Now');
+                    window.trendChartObj.data.datasets[0].data.push(data.new_balance);
+                    if (window.trendChartObj.data.labels.length > 10) {
+                        window.trendChartObj.data.labels.shift();
+                        window.trendChartObj.data.datasets[0].data.shift();
+                    }
+                    window.trendChartObj.update();
+                }
+
+                // Update Recent Transactions table dynamically
+                let tbody = document.querySelector('tbody.divide-y');
+                if (tbody) {
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'hover:bg-slate-50 transition';
+                    newRow.innerHTML = `
+                        <td class="py-3 text-slate-500">${data.timestamp}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-xs font-bold">Sent</span>
+                        </td>
+                        <td class="py-3 font-medium text-slate-700">${data.receiver_name}</td>
+                        <td class="py-3 text-slate-500">${data.category}</td>
+                        <td class="py-3 text-right font-bold font-mono text-red-500">-₹${data.amount.toFixed(2)}</td>
+                    `;
+                    tbody.prepend(newRow);
+                    if (tbody.children.length > 10) {
+                        tbody.lastElementChild.remove();
+                    }
+                } else {
+                    // If the table didn't exist (no transactions initially), refresh the page
+                    setTimeout(() => { window.location.reload(); }, 1500);
+                }
             } else {
                 showToast('sendMoneyToast', '❌ ' + data.message, false);
             }
@@ -771,5 +851,100 @@ function closeScanner() {
 
 if (startScannerBtn) startScannerBtn.addEventListener('click', openScanner);
 if (closeScannerBtn) closeScannerBtn.addEventListener('click', closeScanner);
+
+// ═══════════════════════════════════════════════════════════════
+// 8. RESPOND PAYMENT REQUEST — AJAX
+// ═══════════════════════════════════════════════════════════════
+async function respondPayment(reqId, action) {
+    try {
+        const res  = await fetch('{% url "respond_payment_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken':  getCsrfToken(),
+            },
+            body: JSON.stringify({ request_id: reqId, action: action }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            const card = document.getElementById(`payReq-${reqId}`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transition = 'opacity 0.4s';
+                setTimeout(() => {
+                    card.remove();
+                    const list = document.getElementById('paymentRequestList');
+                    if (list && list.children.length === 0) {
+                        list.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">No pending requests at the moment.</div>';
+                    }
+                }, 400);
+            }
+            if(data.new_balance) {
+                document.getElementById('liveBalance').textContent = `₹${parseFloat(data.new_balance).toFixed(2)}`;
+            }
+            if (action === 'approve' && data.amount) {
+                // Update charts dynamically
+                if (window.expenseChartObj && data.category) {
+                    let catIndex = window.expenseChartObj.data.labels.indexOf(data.category);
+                    if (catIndex >= 0) {
+                        window.expenseChartObj.data.datasets[0].data[catIndex] += data.amount;
+                    } else {
+                        window.expenseChartObj.data.labels.push(data.category);
+                        window.expenseChartObj.data.datasets[0].data.push(data.amount);
+                        window.expenseChartObj.data.datasets[0].backgroundColor.push('#f59e0b');
+                    }
+                    window.expenseChartObj.update();
+                }
+
+                if (window.trendChartObj) {
+                    window.trendChartObj.data.labels.push('Now');
+                    window.trendChartObj.data.datasets[0].data.push(data.new_balance);
+                    if (window.trendChartObj.data.labels.length > 10) {
+                        window.trendChartObj.data.labels.shift();
+                        window.trendChartObj.data.datasets[0].data.shift();
+                    }
+                    window.trendChartObj.update();
+                }
+
+                // Update Recent Transactions table dynamically
+                let tbody = document.querySelector('tbody.divide-y');
+                if (tbody) {
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'hover:bg-slate-50 transition';
+                    newRow.innerHTML = `
+                        <td class="py-3 text-slate-500">${data.timestamp}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-xs font-bold">Sent</span>
+                        </td>
+                        <td class="py-3 font-medium text-slate-700">${data.receiver_name}</td>
+                        <td class="py-3 text-slate-500">${data.category}</td>
+                        <td class="py-3 text-right font-bold font-mono text-red-500">-₹${data.amount.toFixed(2)}</td>
+                    `;
+                    tbody.prepend(newRow);
+                    if (tbody.children.length > 10) {
+                        tbody.lastElementChild.remove();
+                    }
+                } else {
+                    // Refresh if table was initially empty
+                    setTimeout(() => { window.location.reload(); }, 1500);
+                }
+            }
+            
+            // alert('Success: ' + data.message);
+            const msg = 'Success: ' + data.message;
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 font-bold';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Network error. Please try again.');
+    }
+}
+
 </script>
 {% endblock %}

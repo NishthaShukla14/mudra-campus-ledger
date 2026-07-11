@@ -1,141 +1,318 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 flex flex-col items-center font-sans text-slate-800">
-  
-  <div class="w-full max-w-lg">
-    
-    <!-- ── Header ───────────────────────────────────────────────────────── -->
+<div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
     <div class="mb-10 text-center">
-      <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Virtual Card</h1>
-      <p class="mt-2 text-sm text-slate-500">Manage your MUDRA campus card, limits, and security settings.</p>
+        <h1 class="text-3xl font-bold text-slate-800">Virtual Card</h1>
+        <p class="text-slate-500 mt-2">Your premium digital campus card for all payments.</p>
     </div>
 
-    <!-- ── Virtual Credit Card Mockup ───────────────────────────────── -->
-    <div class="flex justify-center mb-10 perspective-[1000px]">
-      <!-- Card Container with Hover 3D Effect -->
-      <div class="relative w-full max-w-sm aspect-[1.586/1] bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 rounded-[1.5rem] shadow-[0_20px_50px_rgba(79,70,229,0.4)] overflow-hidden text-white p-7 flex flex-col justify-between transition-transform duration-500 hover:rotate-3 hover:scale-105 group border border-white/20 backdrop-blur-sm cursor-pointer">
-        
-        <!-- Decorative subtle pattern overlay -->
-        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 24px 24px;"></div>
-        
-        <!-- Ambient glow blobs inside card -->
-        <div class="absolute -right-20 -top-20 w-48 h-48 bg-white/20 rounded-full blur-3xl pointer-events-none mix-blend-overlay"></div>
-        <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-400/30 rounded-full blur-2xl pointer-events-none mix-blend-overlay"></div>
-
-        <!-- Top row: Logo & NFC -->
-        <div class="flex justify-between items-start relative z-10">
-          <div class="font-black text-2xl tracking-widest italic drop-shadow-sm">MUDRA</div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-          </svg>
-        </div>
-
-        <!-- Middle: Chip & Card Number -->
-        <div class="relative z-10 mt-2">
-          <!-- EMV Chip -->
-          <div class="w-12 h-9 bg-yellow-400/90 rounded-md mb-5 flex items-center justify-center border border-yellow-300/60 shadow-inner relative overflow-hidden">
-            <div class="absolute w-full h-[1px] bg-yellow-600/30 top-1/2"></div>
-            <div class="absolute h-full w-[1px] bg-yellow-600/30 left-1/3"></div>
-            <div class="absolute h-full w-[1px] bg-yellow-600/30 right-1/3"></div>
-            <div class="w-8 h-5 border border-yellow-600/40 rounded-sm relative z-10 bg-yellow-400/50"></div>
-          </div>
-          
-          <div class="font-mono text-2xl sm:text-[1.7rem] tracking-[0.15em] drop-shadow-md text-white/95">
-            4532 9811 0042 7831
-          </div>
-        </div>
-
-        <!-- Bottom row: Name, Validity, CVV -->
-        <div class="flex justify-between items-end relative z-10 font-mono mt-2">
-          <div>
-            <div class="text-[9px] uppercase tracking-widest text-indigo-100 mb-0.5 opacity-80">Cardholder Name</div>
-            <div class="text-[13px] font-semibold tracking-widest uppercase truncate max-w-[150px] drop-shadow-sm">Nishtha Shukla</div>
-          </div>
-          <div class="flex gap-6 text-right">
-            <div>
-              <div class="text-[9px] uppercase tracking-widest text-indigo-100 mb-0.5 opacity-80">Valid Thru</div>
-              <div class="text-[13px] font-semibold tracking-wider drop-shadow-sm">12/28</div>
-            </div>
-            <div>
-              <div class="text-[9px] uppercase tracking-widest text-indigo-100 mb-0.5 opacity-80">CVV</div>
-              <div class="text-[13px] font-semibold tracking-wider drop-shadow-sm">•••</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Settings Container ───────────────────────────────────────── -->
-    <div class="bg-white rounded-[2rem] shadow-xl border border-slate-100 p-6 sm:p-8 space-y-8">
-      
-      <!-- Daily Campus Spend Limit -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       <div>
-        <div class="flex items-center justify-between mb-5">
-          <div>
-            <h3 class="text-base font-bold text-slate-800">Daily Campus Spend Limit</h3>
-            <p class="text-[13px] text-slate-500 mt-0.5">Control your daily pocket money usage.</p>
-          </div>
-          <!-- Dynamic Limit Display -->
-          <div class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl font-extrabold text-lg border border-indigo-100 shadow-sm" id="limitDisplay">
-            ₹1,500
-          </div>
-        </div>
-        
-        <!-- DaisyUI Range Slider -->
-        <input type="range" min="0" max="5000" value="1500" step="100" class="range range-primary range-sm w-full" oninput="document.getElementById('limitDisplay').innerText = '₹' + this.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')" />
-        
-        <div class="w-full flex justify-between text-xs px-1 font-bold text-slate-400 mt-2 tracking-wide">
-          <span>₹0</span>
-          <span>₹2,500</span>
-          <span>₹5,000</span>
-        </div>
-      </div>
+        <!-- ── Virtual Credit Card Mockup ───────────────────────────────── -->
+        <div class="flex justify-center mb-10 perspective-[1000px]">
+          <div class="w-full max-w-sm aspect-[1.586/1] bg-gradient-to-tr from-slate-900 via-slate-800 to-indigo-900 rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden transition-transform duration-500 hover:rotate-y-12 hover:rotate-x-12 transform-style-3d group cursor-pointer border border-slate-700">
+            <!-- Glass Overlay / Shine -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+            
+            <!-- Card Chip -->
+            <div class="w-12 h-9 bg-gradient-to-br from-yellow-200 to-yellow-500 rounded-md absolute top-1/4 left-6 shadow-inner flex items-center justify-center opacity-90">
+                <div class="w-full h-full border border-yellow-600/30 rounded-md grid grid-cols-3 grid-rows-3 gap-0.5 p-0.5">
+                    <div class="border-r border-b border-yellow-600/30"></div><div class="border-b border-yellow-600/30"></div><div class="border-l border-b border-yellow-600/30"></div>
+                    <div class="border-r border-b border-yellow-600/30"></div><div class="border-b border-yellow-600/30"></div><div class="border-l border-b border-yellow-600/30"></div>
+                    <div class="border-r border-yellow-600/30"></div><div></div><div class="border-l border-yellow-600/30"></div>
+                </div>
+            </div>
 
-      <hr class="border-slate-100">
+            <!-- Wifi/Contactless Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="absolute top-[28%] left-24 h-7 w-7 text-white/50 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M4.222 4.222c8.163-8.164 21.393-8.164 29.556 0" />
+            </svg>
 
-      <!-- Security Settings -->
-      <div>
-        <h3 class="text-base font-bold text-slate-800 mb-5">Card Security</h3>
-        <div class="space-y-4">
-          
-          <!-- Freeze Card Toggle -->
-          <label class="flex items-center justify-between cursor-pointer p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group">
-            <div class="flex items-center gap-4">
-              <div class="w-11 h-11 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
+            <!-- Card Number -->
+            <div class="absolute top-1/2 left-6 right-6 font-mono text-xl tracking-[0.2em] font-medium text-slate-100 drop-shadow-md">
+              {{ request.user.card_number|default:"4532 9811 0042 7831" }}
+            </div>
+
+            <!-- Cardholder and Expiry -->
+            <div class="absolute bottom-6 left-6 right-6 flex justify-between items-end">
               <div>
-                <h4 class="font-semibold text-slate-800 text-sm">Freeze Card</h4>
-                <p class="text-[13px] text-slate-500 mt-0.5">Temporarily block all campus transactions.</p>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Cardholder Name</p>
+                <p class="font-bold tracking-wide drop-shadow-sm uppercase text-sm">{{ request.user.name }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Valid Thru</p>
+                <p class="font-bold tracking-wide font-mono drop-shadow-sm">12/28</p>
               </div>
             </div>
-            <!-- DaisyUI Toggle (Red for danger/freeze) -->
-            <input type="checkbox" class="toggle toggle-error" />
-          </label>
-
-          <!-- Enable Online Txn Toggle -->
-          <label class="flex items-center justify-between cursor-pointer p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group">
-            <div class="flex items-center gap-4">
-              <div class="w-11 h-11 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                </svg>
-              </div>
-              <div>
-                <h4 class="font-semibold text-slate-800 text-sm">Online Transactions</h4>
-                <p class="text-[13px] text-slate-500 mt-0.5">Enable off-campus portal payments.</p>
-              </div>
+            
+            <div class="absolute top-6 right-6">
+                <div class="font-black text-2xl tracking-widest italic drop-shadow-sm">MUDRA</div>
+                <div class="text-xl font-bold font-mono mt-1 text-right text-indigo-300">₹{{ request.user.wallet_balance }}</div>
             </div>
-            <!-- DaisyUI Toggle (Indigo/Primary for success) -->
-            <input type="checkbox" class="toggle toggle-primary" checked />
-          </label>
+          </div>
+        </div>
 
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Card Settings</h3>
+            <div class="flex justify-between items-center py-3 border-b border-slate-100">
+                <div>
+                    <p class="font-semibold text-slate-700">Online Transactions</p>
+                    <p class="text-xs text-slate-500">Allow payments on websites</p>
+                </div>
+                <input type="checkbox" class="toggle toggle-primary" checked />
+            </div>
+            <div class="flex justify-between items-center py-3 border-b border-slate-100">
+                <div>
+                    <p class="font-semibold text-slate-700">Contactless Payments</p>
+                    <p class="text-xs text-slate-500">Tap to pay at terminals</p>
+                </div>
+                <input type="checkbox" class="toggle toggle-primary" checked />
+            </div>
+            <div class="flex justify-between items-center py-3 border-b border-slate-100">
+                <div>
+                    <p class="font-semibold text-slate-700">Biometric Login</p>
+                    <p class="text-xs text-slate-500">Enable FaceID authentication</p>
+                </div>
+                <button type="button" id="openFaceId" class="btn btn-sm bg-slate-900 text-white rounded-lg px-4 border-none hover:bg-slate-800">Setup Face</button>
+            </div>
+            <div class="flex justify-between items-center py-3">
+                <div>
+                    <p class="font-semibold text-slate-700 text-rose-500">Freeze Card</p>
+                    <p class="text-xs text-slate-500">Temporarily block all transactions</p>
+                </div>
+                <input type="checkbox" class="toggle toggle-error" />
+            </div>
         </div>
       </div>
       
+      <!-- Right Col: Chart -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-full min-h-[400px] flex flex-col">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Balance Trend (7 Days)</h3>
+          <div class="relative flex-grow w-full">
+              <canvas id="trendChart"></canvas>
+          </div>
+      </div>
+      
     </div>
-  </div>
 </div>
+
+<!-- FaceID Setup Modal -->
+<div id="faceIdModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div id="modalContent" class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm flex flex-col items-center relative transform scale-95 transition-transform duration-300">
+        <button id="closeFaceId" type="button" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <h3 class="text-xl font-bold text-slate-800 mb-4">Setup FaceID</h3>
+        
+        <div class="relative w-56 h-56 rounded-full overflow-hidden border-4 border-indigo-100 shadow-inner mb-6 bg-slate-100 flex items-center justify-center">
+            <video id="cameraFeed" autoplay playsinline muted class="object-cover w-full h-full transform scale-x-[-1] hidden"></video>
+            <div id="cameraLoading" class="text-slate-400 text-sm text-center px-4">
+                Click "Start Camera"
+            </div>
+            <div id="scannerLine" class="absolute left-0 w-full h-1 bg-green-400 shadow-[0_0_15px_rgba(74,222,128,1)] hidden z-10"></div>
+        </div>
+
+        <p id="statusText" class="text-sm font-medium text-slate-500 mb-4 h-5 text-center">Look directly at the camera.</p>
+        <div id="faceToast" class="hidden w-full mb-3 px-4 py-2 rounded-lg text-xs font-semibold text-center"></div>
+
+        <button type="button" id="startCameraBtn" class="w-full bg-slate-700 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition-all">Start Camera</button>
+        <button type="button" id="scanBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all hidden mt-2">Capture & Save</button>
+    </div>
+</div>
+
+<style>
+    @keyframes scan {
+        0%   { top: 0;    opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
+    }
+    .scanning-line { animation: scan 2s infinite linear; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+<script>
+// CSRF Token logic
+function getCsrf() {
+    const name  = 'csrftoken';
+    const parts = document.cookie.split(';');
+    for (let p of parts) {
+        const [k, v] = p.trim().split('=');
+        if (k === name) return decodeURIComponent(v);
+    }
+    return '';
+}
+
+// Chart Logic
+const trendLabels   = {{ trend_labels|safe|default:"[]" }};
+const trendData     = {{ trend_data|safe|default:"[]" }};
+
+const trendCtx = document.getElementById('trendChart');
+if (trendCtx) {
+    new Chart(trendCtx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: trendLabels.length > 0 ? trendLabels : ['Now'],
+            datasets: [{
+                label: 'Balance (₹)',
+                data: trendData.length > 0 ? trendData : [{{ request.user.wallet_balance|default:"0" }}],
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
+        }
+    });
+}
+
+// FaceID Logic
+const openBtn      = document.getElementById('openFaceId');
+const closeBtn     = document.getElementById('closeFaceId');
+const modal        = document.getElementById('faceIdModal');
+const modalContent = document.getElementById('modalContent');
+const video        = document.getElementById('cameraFeed');
+const cameraLoading = document.getElementById('cameraLoading');
+const startCameraBtn = document.getElementById('startCameraBtn');
+const scanBtn      = document.getElementById('scanBtn');
+const statusText   = document.getElementById('statusText');
+const scannerLine  = document.getElementById('scannerLine');
+let stream         = null;
+let modelsLoaded   = false;
+
+async function loadModels() {
+    if (modelsLoaded) return;
+    statusText.textContent = "Loading Face AI models...";
+    const modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+    await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl),
+        faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl),
+        faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl)
+    ]);
+    modelsLoaded = true;
+    statusText.textContent = "Please look directly at the camera.";
+}
+
+function openModal() {
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalContent.classList.remove('scale-95');
+        modalContent.classList.add('scale-100');
+    }, 10);
+}
+
+function closeModal() {
+    modal.classList.add('opacity-0');
+    modalContent.classList.remove('scale-100');
+    modalContent.classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
+            stream = null;
+        }
+        video.classList.add('hidden');
+        cameraLoading.classList.remove('hidden');
+        startCameraBtn.classList.remove('hidden');
+        scanBtn.classList.add('hidden');
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Capture & Save';
+        scannerLine.classList.remove('scanning-line');
+        scannerLine.classList.add('hidden');
+    }, 300);
+}
+
+openBtn.addEventListener('click', openModal);
+closeBtn.addEventListener('click', closeModal);
+
+startCameraBtn.addEventListener('click', async () => {
+    startCameraBtn.textContent = 'Starting Camera...';
+    startCameraBtn.disabled    = true;
+    try {
+        await loadModels();
+    } catch (e) {
+        startCameraBtn.disabled = false;
+        startCameraBtn.textContent = 'Start Camera';
+        return;
+    }
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.classList.remove('hidden');
+        cameraLoading.classList.add('hidden');
+        startCameraBtn.classList.add('hidden');
+        scanBtn.classList.remove('hidden');
+        statusText.textContent = 'Click capture when ready.';
+    } catch (err) {
+        startCameraBtn.disabled    = false;
+        startCameraBtn.textContent = 'Start Camera';
+    }
+});
+
+scanBtn.addEventListener('click', async () => {
+    scanBtn.disabled  = true;
+    scanBtn.textContent = 'Processing...';
+    statusText.textContent = 'Hold still...';
+    scannerLine.classList.remove('hidden');
+    scannerLine.classList.add('scanning-line');
+
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    
+    if (!detection) {
+        scanBtn.disabled    = false;
+        scanBtn.textContent = 'Capture & Save';
+        scannerLine.classList.remove('scanning-line');
+        scannerLine.classList.add('hidden');
+        statusText.textContent = '❌ No face detected. Try again.';
+        return;
+    }
+    
+    const descriptorArray = Array.from(detection.descriptor);
+    
+    try {
+        const res = await fetch('{% url "register_face_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrf(),
+            },
+            body: JSON.stringify({ descriptor: descriptorArray })
+        });
+        const data = await res.json();
+        
+        scannerLine.classList.remove('scanning-line');
+        scannerLine.classList.add('hidden');
+        
+        if (data.success) {
+            statusText.textContent = '✅ ' + data.message;
+            statusText.className   = 'text-sm font-medium text-green-500 mb-4 h-5 text-center';
+            video.style.border     = '4px solid #4ade80';
+            setTimeout(() => {
+                closeModal();
+                alert("FaceID successfully registered!");
+            }, 1000);
+        } else {
+            statusText.textContent = '❌ ' + data.message;
+            scanBtn.disabled = false;
+            scanBtn.textContent = 'Capture & Save';
+        }
+    } catch (err) {
+        statusText.textContent = '❌ Network error.';
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Capture & Save';
+    }
+});
+</script>
 {% endblock %}

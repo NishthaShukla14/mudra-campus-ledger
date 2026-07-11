@@ -36,6 +36,7 @@ urlpatterns = [
 
     # Bill Splitter (dashboard → AJAX)
     path('api/bill-split/',    views.bill_split_api,     name='bill_split_api'),
+    path('api/respond-payment/', views.respond_payment_api, name='respond_payment_api'),
 
     # Loan: apply (student) and approve/reject (admin)
     path('api/loan/apply/',    views.apply_loan_api,     name='apply_loan_api'),
@@ -53,5 +54,9 @@ urlpatterns = [
     path('fee-payment/', views.fee_payment, name='fee_payment'),
     path('virtual-card/', views.virtual_card, name='virtual_card'),
     path('helpdesk/', views.helpdesk, name='helpdesk'),
+    path('api/verify-roll/', views.verify_roll_number, name='verify_roll'),
+    path('api/register-face/', views.register_face_api, name='register_face_api'),
+    path('terms/', views.terms_view, name='terms'),
+    path('privacy/', views.privacy_view, name='privacy'),
+    path('security/', views.security_view, name='security'),
 ]
-path('legal/', views.legal_view, name='legal'),

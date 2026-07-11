@@ -1,0 +1,42 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mx-auto py-16 px-6 max-w-4xl">
+    <div class="flex items-center gap-3 mb-8">
+        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        </span>
+        <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Security Information</h1>
+    </div>
+    
+    <div class="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+        <p class="text-sm text-slate-400 mb-8 font-medium">Last updated: July 2026</p>
+        
+        <div class="prose prose-slate max-w-none text-slate-600 space-y-6">
+            <p class="text-lg text-slate-700 font-medium">MUD₹A leverages enterprise-grade architecture to ensure your campus funds remain unconditionally secure.</p>
+            
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">1. Bank-Grade Encryption</h3>
+                <p>All network communications between the web client and the server are secured using HTTPS (TLS 1.3). Passwords are cryptographically salted and hashed using the PBKDF2 algorithm before storage.</p>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">2. Biometric Authentication (FaceID)</h3>
+                <p>The MUD₹A Face Unlock mechanism uses a custom AI threshold (Euclidean distance < 0.55) to verify 128 nodal points of your face. This prevents spoofing using 2D photographs and provides a frictionless, high-security login.</p>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">3. Transaction Integrity</h3>
+                <p>The backend ledger enforces strict database-level atomic transactions (`db_transaction.atomic()`). This mathematically guarantees that no race conditions can occur during high-concurrency periods (e.g., mass fee payments).</p>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">4. Automated Log Audits</h3>
+                <p>Unusual activity, such as rapid repeated failed logins or massive outbound transaction spikes, are automatically flagged by our background cron jobs and forwarded to the Helpdesk for manual administrative review.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
