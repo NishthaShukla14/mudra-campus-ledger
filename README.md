@@ -130,5 +130,3 @@ This repository currently has no license file. Add a LICENSE (for example MIT or
 ## Maintainer
 
 NishthaShukla14
-
-For issues or feature requests, please open an issue in this repository.
