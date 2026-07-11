@@ -123,10 +123,11 @@ Please keep PRs focused and include screenshots or steps to reproduce when repor
 - Add automated tests and CI pipeline
 - Containerize (Docker) and provide deployment instructions
 
+
+
 ## License
 
 This repository currently has no license file. Add a LICENSE (for example MIT or Apache-2.0) if you want to make the project's license explicit.
 
 ## Maintainer
-
 NishthaShukla14
