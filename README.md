@@ -1,5 +1,5 @@
 # Mudra Campus Ledger
-Bank Management System 
+Bank Management System ( Mudra) 
 Mudra Campus Ledger is a lightweight web-based ledger and expense-tracking application for campus groups, student organizations, and small clubs. It provides an easy interface to record incomes and expenses, view balances and transaction history, and generate simple reports for transparent financial record-keeping.
 
 > This README was generated and replaces an earlier draft. Please update any framework-specific commands, environment variables, and badges to match the actual project details.
